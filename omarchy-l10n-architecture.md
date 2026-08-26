@@ -92,6 +92,7 @@ The runtime primitive, largely as written in PR #7434: a `pragma Singleton` expo
 
 - **Exposes** — `tr(source, args)`, `ntr(count, singular, plural, args)`, `registerCatalog(domain, json)`
 - **Selects** — `LANGUAGE` → `LC_ALL` → `LC_MESSAGES` → `LANG`, with regional fallback (`ca_ES` → `ca`)
+- **Resolves** — per key along a domain chain, `plugin id` → `clonedFrom` → English source
 - **Fallback** — missing domain, missing key, or malformed catalog all yield the English source string
 - **Changes vs #7434** — multi-source catalogs keyed by domain rather than one global file; CLDR plural rules rather than a hardcoded two-form test
 
@@ -158,6 +159,32 @@ untranslated plugin degrades to English instead of failing.
 
 ---
 
+### Catalog resolution
+
+Lookup happens **per key**, along a domain chain — not by picking one domain per plugin:
+
+```
+plugin's own id  →  omarchy.clonedFrom (if any)  →  English source
+```
+
+First hit wins. `omarchy plugin clone` rewrites a plugin's manifest `id` and stamps
+`omarchy.clonedFrom` with the original, so a cloned plugin resolves against its own catalog first
+and falls through to the upstream catalog for everything it did not change. Translations follow the
+same routing the shell already applies to a clone's IPC calls.
+
+| Case | Resolves to |
+|---|---|
+| Clone adds a string and translates it | clone catalog |
+| Clone inherits an upstream string unchanged | upstream catalog |
+| Clone overrides one upstream translation | clone catalog shadows it |
+| String translated nowhere | English source |
+
+The consequence worth designing for: a clone's catalog is a **sparse overlay**, so its author
+writes only the deltas instead of maintaining a full copy. This mirrors how gettext's `LANGUAGE`
+preference list already behaves, so the semantics should be familiar to translators.
+
+---
+
 ## Sequence
 
 Ordered by dependency: each step is independently useful, and steps 3–4 need no further maintainer
@@ -196,6 +223,13 @@ The plugin id already works as an implicit domain and needs no manifest change. 
 The registry reserves `omarchy.*` for first-party plugins, so community packs need a different
 prefix — `lang.ca` is the simplest. If packs ever ship with the distro, they would move to
 `omarchy.lang.ca`.
+
+**Should a plugin be able to bundle its own catalogs?**
+A plugin could ship `translations/<locale>.json` inside its own directory, prepended to the domain
+chain, letting third-party authors localize without going through the hub at all. It is one more
+link in a mechanism that already exists — but it splits catalogs across two places, weakens the hub
+as a single source of truth, and leaves translators without an obvious place to contribute.
+Undecided.
 
 **Is a gettext toolchain acceptable in CI?**
 It adds nothing to the runtime — users still get plain JSON and no new packages. But `msgmerge` and

@@ -294,6 +294,7 @@
   /* ---------- component table ---------- */
 
   .table-scroll { overflow-x: auto; margin: 0 0 30px; }
+  .table-scroll.narrow table { min-width: 420px; }
 
   table {
     border-collapse: collapse;
@@ -688,6 +689,8 @@
         <dd><code>tr(source, args)</code>, <code>ntr(count, singular, plural, args)</code>, <code>registerCatalog(domain, json)</code></dd>
         <dt>Selects</dt>
         <dd><code>LANGUAGE</code> &#8594; <code>LC_ALL</code> &#8594; <code>LC_MESSAGES</code> &#8594; <code>LANG</code>, with regional fallback (<code>ca_ES</code> &#8594; <code>ca</code>)</dd>
+        <dt>Resolves</dt>
+        <dd>Per key along a domain chain: plugin <code>id</code> &#8594; <code>clonedFrom</code> &#8594; English source</dd>
         <dt>Fallback</dt>
         <dd>Missing domain, missing key, or malformed catalog all yield the English source string</dd>
         <dt>Changes vs #7434</dt>
@@ -851,6 +854,47 @@
         untranslated plugin degrades to English instead of failing.
       </figcaption>
     </figure>
+
+    <div class="col">
+      <h3 style="margin-top: 26px; margin-bottom: 10px;">Catalog resolution</h3>
+      <p>
+        Lookup happens <strong>per key</strong>, along a domain chain &mdash; not by picking one
+        domain per plugin. First hit wins:
+      </p>
+      <p style="font-family: var(--mono); font-size: 0.88rem; background: var(--surface-2); border-radius: 4px; padding: 12px 16px;">
+        plugin's own id &#8594; omarchy.clonedFrom (if any) &#8594; English source
+      </p>
+      <p>
+        <code>omarchy plugin clone</code> rewrites a plugin's manifest <code>id</code> and stamps
+        <code>omarchy.clonedFrom</code> with the original, so a cloned plugin resolves against its
+        own catalog first and falls through to the upstream catalog for everything it did not
+        change. Translations follow the same routing the shell already applies to a clone's IPC
+        calls.
+      </p>
+    </div>
+
+    <div class="table-scroll narrow">
+      <table>
+        <thead>
+          <tr><th style="width: 52%">Case</th><th>Resolves to</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Clone adds a string and translates it</td><td>clone catalog</td></tr>
+          <tr><td>Clone inherits an upstream string unchanged</td><td>upstream catalog</td></tr>
+          <tr><td>Clone overrides one upstream translation</td><td>clone catalog shadows it</td></tr>
+          <tr><td>String translated nowhere</td><td>English source</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="col">
+      <p>
+        The consequence worth designing for: a clone's catalog is a <strong>sparse overlay</strong>,
+        so its author writes only the deltas instead of maintaining a full copy. This mirrors how
+        gettext's <code>LANGUAGE</code> preference list already behaves, so the semantics should be
+        familiar to translators.
+      </p>
+    </div>
   </section>
 
   <section>
@@ -937,6 +981,17 @@
         The registry reserves <code>omarchy.*</code> for first-party plugins, so community packs
         need a different prefix &mdash; <code>lang.ca</code> is the simplest. If packs ever ship with
         the distro, they would move to <code>omarchy.lang.ca</code>.
+      </p>
+    </div>
+
+    <div class="q">
+      <h3>Should a plugin be able to bundle its own catalogs?</h3>
+      <p>
+        A plugin could ship <code>translations/&lt;locale&gt;.json</code> inside its own directory,
+        prepended to the domain chain, letting third-party authors localize without going through
+        the hub at all. It is one more link in a mechanism that already exists &mdash; but it splits
+        catalogs across two places, weakens the hub as a single source of truth, and leaves
+        translators without an obvious place to contribute. Undecided.
       </p>
     </div>
 
