@@ -1,0 +1,962 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+  /* minimal reset (supplied by the artifact host when published) */
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; }
+  img, svg, video { display: block; max-width: 100%; }
+  h1, h2, h3, h4, p, figure, blockquote, dl, dd { margin: 0; }
+  ul[class], ol[class] { list-style: none; margin: 0; padding: 0; }
+</style>
+<title>Omarchy Localization Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+  :root {
+    --ground:   #F6F7F9;
+    --surface:  #FFFFFF;
+    --surface-2:#EDF0F3;
+    --ink:      #16191F;
+    --muted:    #5A6270;
+    --faint:    #858D9A;
+    --rule:     #DDE2E8;
+    --core:     #0F5F63;
+    --core-bg:  #E2EFEF;
+    --comm:     #A8621B;
+    --comm-bg:  #F6EADC;
+
+    --sans: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --cond: "IBM Plex Sans Condensed", "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    --measure: 68ch;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:   #0E1416;
+      --surface:  #161E21;
+      --surface-2:#1D272A;
+      --ink:      #E4EAEC;
+      --muted:    #9AA8AC;
+      --faint:    #7A888C;
+      --rule:     #263236;
+      --core:     #4FB3B8;
+      --core-bg:  #14312F;
+      --comm:     #D99A4E;
+      --comm-bg:  #33260F;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:   #0E1416;
+    --surface:  #161E21;
+    --surface-2:#1D272A;
+    --ink:      #E4EAEC;
+    --muted:    #9AA8AC;
+    --faint:    #7A888C;
+    --rule:     #263236;
+    --core:     #4FB3B8;
+    --core-bg:  #14312F;
+    --comm:     #D99A4E;
+    --comm-bg:  #33260F;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16.5px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 28px 96px;
+  }
+
+  .col { max-width: var(--measure); }
+
+  /* ---------- header ---------- */
+
+  header.doc {
+    padding: 56px 0 30px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 40px;
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    font-weight: 500;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin: 0 0 14px;
+  }
+
+  h1 {
+    font-family: var(--cond);
+    font-weight: 700;
+    font-size: clamp(2.1rem, 5vw, 3.05rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+    margin: 0 0 18px;
+  }
+
+  .lede {
+    font-size: 1.14rem;
+    line-height: 1.6;
+    color: var(--muted);
+    max-width: 62ch;
+    margin: 0 0 26px;
+  }
+
+  .lede strong { color: var(--ink); font-weight: 600; }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 26px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--faint);
+  }
+
+  .meta a { color: var(--core); text-decoration-color: color-mix(in srgb, var(--core) 40%, transparent); }
+
+  /* ---------- structure ---------- */
+
+  section { margin: 0 0 56px; }
+
+  h2 {
+    font-family: var(--cond);
+    font-weight: 700;
+    font-size: 1.62rem;
+    letter-spacing: -0.012em;
+    line-height: 1.2;
+    text-wrap: balance;
+    margin: 0 0 6px;
+    padding-top: 6px;
+  }
+
+  h2 .num {
+    font-family: var(--mono);
+    font-size: 0.72em;
+    font-weight: 500;
+    color: var(--faint);
+    margin-right: 12px;
+    letter-spacing: 0;
+  }
+
+  h3 {
+    font-family: var(--cond);
+    font-weight: 600;
+    font-size: 1.13rem;
+    letter-spacing: -0.005em;
+    margin: 0 0 4px;
+  }
+
+  .section-note {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin: 0 0 24px;
+    max-width: 62ch;
+  }
+
+  p { margin: 0 0 16px; }
+
+  ul { margin: 0 0 16px; padding-left: 1.15em; }
+  li { margin-bottom: 7px; }
+  li::marker { color: var(--faint); }
+
+  code {
+    font-family: var(--mono);
+    font-size: 0.855em;
+    background: var(--surface-2);
+    border-radius: 3px;
+    padding: 0.12em 0.36em;
+    word-break: break-word;
+  }
+
+  a { color: var(--core); }
+
+  /* ---------- ownership chips ---------- */
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 3px;
+    white-space: nowrap;
+    vertical-align: 2px;
+  }
+
+  .chip.core { background: var(--core-bg); color: var(--core); }
+  .chip.comm { background: var(--comm-bg); color: var(--comm); }
+
+  .chip .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: currentColor;
+    flex: none;
+  }
+
+  /* ---------- callout ---------- */
+
+  .callout {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--core);
+    border-radius: 4px;
+    padding: 22px 26px;
+    margin: 0 0 34px;
+  }
+
+  .callout h3 { margin-bottom: 8px; }
+  .callout p:last-child { margin-bottom: 0; }
+
+  .stat-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 34px;
+    margin: 18px 0 4px;
+    padding-top: 16px;
+    border-top: 1px solid var(--rule);
+  }
+
+  .stat .n {
+    font-family: var(--cond);
+    font-weight: 700;
+    font-size: 1.7rem;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    display: block;
+  }
+
+  .stat .k {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--faint);
+    display: block;
+    margin-top: 5px;
+  }
+
+  /* ---------- figures ---------- */
+
+  figure {
+    margin: 0 0 34px;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 5px;
+    padding: 26px 24px 18px;
+    overflow-x: auto;
+  }
+
+  figure svg {
+    display: block;
+    width: 100%;
+    min-width: 660px;
+    max-width: 100%;
+    height: auto;
+    color: var(--ink);
+  }
+
+  figcaption {
+    font-size: 0.875rem;
+    color: var(--muted);
+    margin-top: 16px;
+    padding-top: 13px;
+    border-top: 1px solid var(--rule);
+    max-width: 74ch;
+  }
+
+  /* ---------- component table ---------- */
+
+  .table-scroll { overflow-x: auto; margin: 0 0 30px; }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 720px;
+    font-size: 0.905rem;
+  }
+
+  th {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--faint);
+    text-align: left;
+    padding: 0 16px 9px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  td {
+    padding: 13px 16px 13px 0;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+
+  td:last-child, th:last-child { padding-right: 0; }
+
+  td .nm {
+    font-family: var(--mono);
+    font-size: 0.9em;
+    font-weight: 500;
+    color: var(--ink);
+    display: block;
+  }
+
+  td .sub {
+    color: var(--muted);
+    font-size: 0.88em;
+    display: block;
+    margin-top: 3px;
+  }
+
+  /* ---------- component cards ---------- */
+
+  .comp {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 5px;
+    padding: 22px 24px;
+    margin: 0 0 16px;
+  }
+
+  .comp-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 10px 14px;
+    margin-bottom: 12px;
+  }
+
+  .comp-head .name {
+    font-family: var(--mono);
+    font-size: 1.01rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .comp dl {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 7px 18px;
+    margin: 12px 0 0;
+    font-size: 0.9rem;
+  }
+
+  .comp dt {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--faint);
+    padding-top: 4px;
+  }
+
+  .comp dd { margin: 0; }
+
+  .comp p:last-child { margin-bottom: 0; }
+
+  /* ---------- phases ---------- */
+
+  .phase {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 0 18px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .phase:first-of-type { border-top: 1px solid var(--rule); }
+
+  .phase .idx {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--comm);
+    padding-top: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .phase.is-core .idx { color: var(--core); }
+
+  .phase h3 { margin-bottom: 5px; }
+  .phase p { margin-bottom: 0; color: var(--muted); font-size: 0.95rem; max-width: 62ch; }
+  .phase p + p { margin-top: 8px; }
+
+  /* ---------- open questions ---------- */
+
+  .q { border-top: 1px solid var(--rule); padding: 18px 0; }
+  .q:last-child { border-bottom: 1px solid var(--rule); }
+  .q h3 { margin-bottom: 5px; }
+  .q p { margin-bottom: 0; color: var(--muted); font-size: 0.95rem; max-width: 64ch; }
+
+  footer.doc {
+    margin-top: 60px;
+    padding-top: 22px;
+    border-top: 1px solid var(--rule);
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--faint);
+    line-height: 1.8;
+  }
+
+  @media (max-width: 640px) {
+    .wrap { padding: 0 18px 64px; }
+    .comp dl { grid-template-columns: 1fr; gap: 2px; }
+    .comp dt { padding-top: 10px; }
+    .phase { grid-template-columns: 30px 1fr; gap: 0 12px; }
+  }
+
+  /* ---------- svg tokens (presentation attrs can't take var()) ---------- */
+
+  svg .mono { font-family: var(--mono); }
+  svg .sans { font-family: var(--sans); }
+
+  svg .box        { fill: var(--surface); stroke: currentColor; stroke-width: 1.2; }
+  svg .box.s-core { stroke: var(--core); stroke-width: 1.6; }
+  svg .box.s-comm { stroke: var(--comm); stroke-width: 1.6; }
+
+  svg .band-core { fill: var(--core-bg); opacity: 0.55; }
+  svg .band-comm { fill: var(--comm-bg); opacity: 0.55; }
+  svg .band-user { fill: var(--surface-2); }
+
+  svg .f-ink   { fill: currentColor; }
+  svg .f-core  { fill: var(--core); }
+  svg .f-comm  { fill: var(--comm); }
+  svg .f-muted { fill: var(--muted); }
+  svg .f-faint { fill: var(--faint); }
+
+  svg .hair      { stroke: var(--rule); stroke-width: 1; }
+  svg .flow      { stroke: currentColor; stroke-width: 1.3; fill: none; }
+  svg .flow-core { stroke: var(--core); stroke-width: 1.5; fill: none; }
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+
+  <header class="doc">
+    <p class="eyebrow">Design proposal &middot; Omarchy 4 / Quickshell</p>
+    <h1>Omarchy Localization Architecture</h1>
+    <p class="lede">
+      A four-part system for translating the Omarchy shell. Only one part &mdash; roughly
+      <strong>250 additive lines</strong> &mdash; needs to live in <code>basecamp/omarchy</code>.
+      Catalogs, translator tooling, and language packs all sit outside the repo and cost
+      maintainers nothing to carry.
+    </p>
+    <p class="meta">
+      <span>Status &middot; draft for discussion</span>
+      <span>Base &middot; <code>quattro</code> @ v4.0.1</span>
+      <span>Builds on &middot; <a href="https://github.com/basecamp/omarchy/pull/7434">PR #7434</a></span>
+    </p>
+  </header>
+
+  <section>
+    <h2>The ask, up front</h2>
+    <p class="section-note">What maintainers are actually being asked to accept.</p>
+
+    <div class="callout col">
+      <h3>One mechanism, no content, no behavior change</h3>
+      <p>
+        The upstream change is a translation primitive: a QML singleton exported from
+        <code>qs.Commons</code>, its pure-JS model, and a Bash counterpart for the CLI scripts.
+        It ships with <em>zero</em> catalogs and <em>zero</em> call-site conversions.
+      </p>
+      <p>
+        With no catalog present, <code>I18n.tr("Connect")</code> returns <code>"Connect"</code>.
+        The change is a provable no-op on a stock install, which makes it reviewable in one
+        sitting and safe to revert.
+      </p>
+      <div class="stat-row">
+        <div class="stat"><span class="n">~250</span><span class="k">lines upstream</span></div>
+        <div class="stat"><span class="n">6</span><span class="k">files touched</span></div>
+        <div class="stat"><span class="n">0</span><span class="k">runtime deps added</span></div>
+        <div class="stat"><span class="n">0</span><span class="k">call sites changed</span></div>
+      </div>
+    </div>
+
+    <div class="col">
+      <p>
+        Everything downstream of that primitive &mdash; extraction tooling, PO catalogs, a Weblate
+        instance, per-language packs &mdash; is community-maintained in separate repositories.
+        Maintainers never review a translation, and a stale or hostile catalog cannot break a
+        shell that falls back to English by construction.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2>How the pieces fit</h2>
+    <p class="section-note">
+      Source strings leave the repo once, come back as compiled catalogs, and the loop closes at
+      the same call sites they started from.
+    </p>
+
+    <figure>
+      <svg viewBox="0 0 1020 580" role="img" aria-label="Cycle diagram: English strings are extracted from the Omarchy shell source into a POT template, merged into per-language PO files on a community localization hub, compiled to namespaced JSON in a language pack repository, installed on a user machine via omarchy plugin add, registered back into the I18n singleton in the running shell, which resolves the original call sites into the translated language.">
+        <defs>
+          <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" class="f-ink"/>
+          </marker>
+          <marker id="ahc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" class="f-core"/>
+          </marker>
+        </defs>
+
+        <!-- band: upstream -->
+        <rect x="24" y="44" width="972" height="150" rx="5" class="band-core"/>
+        <text x="42" y="70" class="mono f-core" font-size="11" font-weight="500" letter-spacing="1.4">UPSTREAM &#183; basecamp/omarchy</text>
+
+        <!-- band: community -->
+        <rect x="24" y="228" width="972" height="150" rx="5" class="band-comm"/>
+        <text x="42" y="254" class="mono f-comm" font-size="11" font-weight="500" letter-spacing="1.4">COMMUNITY &#183; separate repos</text>
+
+        <!-- band: user -->
+        <rect x="24" y="412" width="972" height="132" rx="5" class="band-user"/>
+        <text x="42" y="438" class="mono f-faint" font-size="11" font-weight="500" letter-spacing="1.4">USER MACHINE</text>
+
+        <!-- B1 shell source -->
+        <rect x="52" y="88" width="248" height="76" rx="4" class="box"/>
+        <text x="68" y="114" class="mono f-ink" font-size="12.5" font-weight="600">shell/**/*.qml</text>
+        <text x="68" y="134" class="mono f-muted" font-size="11">I18n.tr("Connect")</text>
+        <text x="68" y="151" class="sans f-faint" font-size="11">English is the key</text>
+
+        <!-- B6 singleton -->
+        <rect x="700" y="88" width="252" height="76" rx="4" class="box s-core"/>
+        <text x="716" y="114" class="mono f-core" font-size="12.5" font-weight="600">qs.Commons.I18n</text>
+        <text x="716" y="134" class="sans f-muted" font-size="11">singleton &#183; the primitive</text>
+        <text x="716" y="151" class="sans f-faint" font-size="11">holds domain &#8594; catalog map</text>
+
+        <!-- B2 pot -->
+        <rect x="52" y="272" width="196" height="76" rx="4" class="box"/>
+        <text x="68" y="298" class="mono f-ink" font-size="12.5" font-weight="600">omarchy.pot</text>
+        <text x="68" y="318" class="sans f-muted" font-size="11">extracted template</text>
+        <text x="68" y="335" class="sans f-faint" font-size="11">msgid + context + refs</text>
+
+        <!-- B3 po -->
+        <rect x="312" y="272" width="212" height="76" rx="4" class="box s-comm"/>
+        <text x="328" y="298" class="mono f-comm" font-size="12.5" font-weight="600">ca.po &#183; es.po &#8230;</text>
+        <text x="328" y="318" class="sans f-muted" font-size="11">omarchy-i18n + Weblate</text>
+        <text x="328" y="335" class="sans f-faint" font-size="11">plurals, fuzzy, comments</text>
+
+        <!-- B4 langpack repo -->
+        <rect x="588" y="272" width="248" height="76" rx="4" class="box"/>
+        <text x="604" y="298" class="mono f-ink" font-size="12.5" font-weight="600">omarchy-lang-ca</text>
+        <text x="604" y="318" class="sans f-muted" font-size="11">generated repo</text>
+        <text x="604" y="335" class="mono f-faint" font-size="11">catalogs/&lt;plugin-id&gt;.json</text>
+
+        <!-- B5 installed -->
+        <rect x="312" y="452" width="424" height="66" rx="4" class="box"/>
+        <text x="328" y="478" class="mono f-ink" font-size="12" font-weight="600">~/.config/omarchy/plugins/omarchy-lang-ca/</text>
+        <text x="328" y="498" class="sans f-muted" font-size="11">a service plugin like any other &#183; enable / disable / remove</text>
+
+        <!-- arrows -->
+        <!-- B1 down to B2 -->
+        <line x1="150" y1="164" x2="150" y2="266" class="flow" marker-end="url(#ah)"/>
+        <text x="162" y="212" class="mono f-muted" font-size="11">extract</text>
+        <text x="162" y="228" class="mono f-faint" font-size="10">on every release</text>
+
+        <!-- B2 to B3 -->
+        <line x1="248" y1="310" x2="306" y2="310" class="flow" marker-end="url(#ah)"/>
+        <text x="252" y="300" class="mono f-muted" font-size="11">msgmerge</text>
+
+        <!-- B3 to B4 -->
+        <line x1="524" y1="310" x2="582" y2="310" class="flow" marker-end="url(#ah)"/>
+        <text x="528" y="300" class="mono f-muted" font-size="11">msgfmt</text>
+
+        <!-- B4 down to B5 -->
+        <path d="M 712 348 L 712 400 L 560 400 L 560 446" class="flow" marker-end="url(#ah)"/>
+        <text x="576" y="393" class="mono f-muted" font-size="11">omarchy plugin add / update</text>
+
+        <!-- B5 up to B6 -->
+        <path d="M 736 470 L 826 470 L 826 170" fill="none" class="flow-core" marker-end="url(#ahc)"/>
+        <text x="838" y="330" class="mono f-core" font-size="11">registerCatalog(</text>
+        <text x="838" y="346" class="mono f-core" font-size="11">&#160;&#160;domain, json)</text>
+
+        <!-- B6 back to B1 -->
+        <path d="M 700 126 L 306 126" fill="none" class="flow-core" marker-end="url(#ahc)"/>
+        <text x="428" y="117" class="mono f-core" font-size="11">tr() resolves &#8594; "Connecta"</text>
+      </svg>
+      <figcaption>
+        The loop closes inside the upstream band: the same <code>I18n.tr()</code> call that produced
+        the extracted string is the one that renders the translation. Everything between the two
+        arrows in that band happens in repositories Omarchy maintainers do not own.
+      </figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>Components at a glance</h2>
+    <p class="section-note">Four artifacts, two ownership boundaries.</p>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 27%">Component</th>
+            <th style="width: 25%">Lives in</th>
+            <th style="width: 16%">Owner</th>
+            <th>Role</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <span class="nm">qs.Commons.I18n</span>
+              <span class="sub">the primitive &mdash; <em>not</em> a plugin</span>
+            </td>
+            <td><span class="nm">shell/Commons/</span><span class="sub">I18n.qml, I18nModel.js</span></td>
+            <td><span class="chip core"><span class="dot"></span>Upstream</span></td>
+            <td>Locale selection, catalog registry, plural rules, <code>tr()</code> / <code>ntr()</code></td>
+          </tr>
+          <tr>
+            <td>
+              <span class="nm">omarchy_t</span>
+              <span class="sub">Bash counterpart</span>
+            </td>
+            <td><span class="nm">default/bash/i18n</span><span class="sub">sourced by bin/ scripts</span></td>
+            <td><span class="chip core"><span class="dot"></span>Upstream</span></td>
+            <td>Same lookup for the ~35 interactive CLI scripts</td>
+          </tr>
+          <tr>
+            <td>
+              <span class="nm">omarchy-i18n</span>
+              <span class="sub">localization hub</span>
+            </td>
+            <td><span class="nm">own repo</span><span class="sub">Weblate attaches here</span></td>
+            <td><span class="chip comm"><span class="dot"></span>Community</span></td>
+            <td>POT + PO source of truth, extraction and build CI, coverage dashboard</td>
+          </tr>
+          <tr>
+            <td>
+              <span class="nm">omarchy-lang-&lt;xx&gt;</span>
+              <span class="sub">plugin id <code>lang.&lt;xx&gt;</code></span>
+            </td>
+            <td><span class="nm">generated repo</span><span class="sub">one per locale</span></td>
+            <td><span class="chip comm"><span class="dot"></span>Community</span></td>
+            <td>Ships compiled JSON catalogs as an ordinary <code>service</code> plugin</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>The components in detail</h2>
+    <p class="section-note">Naming, placement, and the one structural decision worth arguing about.</p>
+
+    <div class="comp">
+      <div class="comp-head">
+        <span class="name">qs.Commons.I18n</span>
+        <span class="chip core"><span class="dot"></span>Upstream</span>
+      </div>
+      <p>
+        The runtime primitive, largely as written in PR #7434: a <code>pragma Singleton</code>
+        exported from the <code>qs.Commons</code> module, backed by a dependency-free
+        <code>I18nModel.js</code> that is unit-testable outside QML.
+      </p>
+      <dl>
+        <dt>Exposes</dt>
+        <dd><code>tr(source, args)</code>, <code>ntr(count, singular, plural, args)</code>, <code>registerCatalog(domain, json)</code></dd>
+        <dt>Selects</dt>
+        <dd><code>LANGUAGE</code> &#8594; <code>LC_ALL</code> &#8594; <code>LC_MESSAGES</code> &#8594; <code>LANG</code>, with regional fallback (<code>ca_ES</code> &#8594; <code>ca</code>)</dd>
+        <dt>Fallback</dt>
+        <dd>Missing domain, missing key, or malformed catalog all yield the English source string</dd>
+        <dt>Changes vs #7434</dt>
+        <dd>Multi-source catalogs keyed by domain rather than one global file; CLDR plural rules rather than a hardcoded two-form test</dd>
+      </dl>
+    </div>
+
+    <div class="comp">
+      <div class="comp-head">
+        <span class="name">omarchy_t</span>
+        <span class="chip core"><span class="dot"></span>Upstream</span>
+      </div>
+      <p>
+        Roughly 30 lines of Bash sourced by the interactive <code>bin/</code> scripts, reading the
+        same compiled JSON. It exists because a meaningful share of Omarchy's user-facing text is
+        <code>gum</code> prompts and <code>--help</code> output, not QML.
+      </p>
+      <dl>
+        <dt>Constraint</dt>
+        <dd>Must be <code>set -u</code> safe &mdash; several callers enable nounset before sourcing</dd>
+        <dt>Never touches</dt>
+        <dd>Command routes, flag names, or machine-readable JSON output</dd>
+      </dl>
+    </div>
+
+    <div class="comp">
+      <div class="comp-head">
+        <span class="name">omarchy-i18n</span>
+        <span class="chip comm"><span class="dot"></span>Community</span>
+      </div>
+      <p>
+        The authoring hub, in the shape of GNOME's Damned Lies or
+        <code>translate.wordpress.org</code>: translators and tooling meet here, and nothing here
+        ever ships to a user machine directly.
+      </p>
+      <dl>
+        <dt>Holds</dt>
+        <dd><code>core/&lt;locale&gt;.po</code> and <code>plugins/&lt;plugin-id&gt;/&lt;locale&gt;.po</code></dd>
+        <dt>Tooling</dt>
+        <dd><code>omarchy-i18n-extract</code> (QML &#8594; POT), <code>omarchy-i18n-build</code> (PO &#8594; namespaced JSON)</dd>
+        <dt>Why PO</dt>
+        <dd>Plural rules, <code>msgctxt</code> disambiguation, developer comments, and &mdash; critically &mdash; <code>msgmerge</code> fuzzy state for tracking upstream drift</dd>
+        <dt>Later</dt>
+        <dd>Weblate attaches to this repo with no change to the layout</dd>
+      </dl>
+    </div>
+
+    <div class="comp">
+      <div class="comp-head">
+        <span class="name">omarchy-lang-&lt;xx&gt;</span>
+        <span class="chip comm"><span class="dot"></span>Community</span>
+      </div>
+      <p>
+        A language pack is an ordinary Omarchy plugin. That single decision buys install, update
+        with diff review, enable/disable, and a listing in the plugins UI &mdash; all from machinery
+        that already exists.
+      </p>
+      <dl>
+        <dt>Manifest</dt>
+        <dd><code>{ "id": "lang.ca", "kinds": ["service"], "keepLoaded": true }</code></dd>
+        <dt>Contains</dt>
+        <dd><code>Service.qml</code> (~60 lines) plus <code>catalogs/&lt;plugin-id&gt;.json</code></dd>
+        <dt>Distribution</dt>
+        <dd><code>omarchy plugin add &lt;url&gt;</code>; refreshed by the existing <code>omarchy plugin update</code>, which already fetches, shows a diff, and confirms</dd>
+        <dt>If blessed</dt>
+        <dd>Could later ship first-party as <code>omarchy.lang.ca</code> with no design change</dd>
+      </dl>
+    </div>
+  </section>
+
+  <section>
+    <h2>Why the primitive is core and the language pack is a plugin</h2>
+    <p class="section-note">The question that most shapes the proposal.</p>
+
+    <div class="col">
+      <p>The translator itself cannot be a plugin, for three concrete reasons:</p>
+      <ul>
+        <li>
+          <strong>Core UI needs it.</strong> <code>shell/Ui/ConfirmDialog.qml</code>,
+          <code>MultiSelect.qml</code>, and <code>SearchableDropdown.qml</code> all contain
+          user-facing strings and are not plugins.
+        </li>
+        <li>
+          <strong>Import-time resolution.</strong> Plugins reach shared code through
+          <code>import qs.Commons</code>. A singleton in that namespace is available to every
+          plugin with zero wiring; a plugin cannot provide one.
+        </li>
+        <li>
+          <strong>Load order.</strong> The registry scan is a <code>Process</code>, so it completes
+          asynchronously after the bar has already rendered. A plugin-provided translator would
+          produce a visible flash of English on every login.
+        </li>
+      </ul>
+      <p>
+        Catalogs have the opposite profile: large, frequently updated, locale-specific, and of no
+        interest to a user who doesn't speak the language. Those are exactly the properties the
+        plugin system exists to manage.
+      </p>
+    </div>
+
+    <figure>
+      <svg viewBox="0 0 1020 348" role="img" aria-label="Diagram: the language pack service reads installedPlugins from the plugin registry, loads a matching catalog file per enabled plugin id, and registers each into the I18n singleton under that plugin's domain; a plugin with no catalog resolves to English.">
+        <defs>
+          <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" class="f-ink"/>
+          </marker>
+          <marker id="ahc2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" class="f-core"/>
+          </marker>
+        </defs>
+
+        <!-- registry -->
+        <rect x="30" y="60" width="242" height="232" rx="4" class="box"/>
+        <text x="46" y="86" class="mono f-ink" font-size="12" font-weight="600">pluginRegistry</text>
+        <text x="46" y="104" class="sans f-faint" font-size="10.5">injected by shell.qml:219</text>
+        <line x1="46" y1="116" x2="256" y2="116" class="hair"/>
+        <text x="46" y="140" class="mono f-muted" font-size="11">installedPlugins {</text>
+        <text x="58" y="162" class="mono f-ink" font-size="11">omarchy.bar</text>
+        <text x="58" y="184" class="mono f-ink" font-size="11">omarchy.menu</text>
+        <text x="58" y="206" class="mono f-ink" font-size="11">dev.foo.weather</text>
+        <text x="46" y="228" class="mono f-muted" font-size="11">}</text>
+        <text x="46" y="256" class="mono f-faint" font-size="10.5">+ __sourceDir, version</text>
+        <text x="46" y="274" class="mono f-faint" font-size="10.5">+ pluginsChanged()</text>
+
+        <!-- langpack service -->
+        <rect x="368" y="108" width="228" height="136" rx="4" class="box s-comm"/>
+        <text x="384" y="134" class="mono f-comm" font-size="12" font-weight="600">lang.ca</text>
+        <text x="384" y="152" class="sans f-muted" font-size="10.5">Service.qml</text>
+        <line x1="384" y1="164" x2="580" y2="164" class="hair"/>
+        <text x="384" y="186" class="sans f-ink" font-size="11">for each enabled id:</text>
+        <text x="384" y="206" class="mono f-muted" font-size="10.5">load catalogs/&lt;id&gt;.json</text>
+        <text x="384" y="228" class="sans f-faint" font-size="10.5">re-runs on pluginsChanged()</text>
+
+        <!-- I18n -->
+        <rect x="692" y="60" width="296" height="232" rx="4" class="box s-core"/>
+        <text x="708" y="86" class="mono f-core" font-size="12" font-weight="600">qs.Commons.I18n</text>
+        <text x="708" y="104" class="sans f-faint" font-size="10.5">domain &#8594; catalog</text>
+        <line x1="708" y1="116" x2="972" y2="116" class="hair"/>
+        <text x="708" y="140" class="mono f-ink" font-size="11">omarchy.bar</text>
+        <text x="852" y="140" class="mono f-comm" font-size="11">ca &#10003;</text>
+        <text x="708" y="164" class="mono f-ink" font-size="11">omarchy.menu</text>
+        <text x="852" y="164" class="mono f-comm" font-size="11">ca &#10003;</text>
+        <text x="708" y="188" class="mono f-ink" font-size="11">dev.foo.weather</text>
+        <text x="852" y="188" class="mono f-faint" font-size="11">&#8212; none</text>
+        <line x1="708" y1="210" x2="972" y2="210" class="hair"/>
+        <text x="708" y="236" class="sans f-muted" font-size="11">weather plugin renders English.</text>
+        <text x="708" y="256" class="sans f-muted" font-size="11">Nothing errors, nothing blanks.</text>
+
+        <!-- arrows -->
+        <line x1="272" y1="176" x2="362" y2="176" class="flow" marker-end="url(#ah2)"/>
+        <text x="276" y="166" class="mono f-muted" font-size="10.5">enumerate</text>
+
+        <line x1="596" y1="176" x2="686" y2="176" class="flow-core" marker-end="url(#ahc2)"/>
+        <text x="590" y="166" class="mono f-core" font-size="10.5">registerCatalog</text>
+
+        <text x="30" y="326" class="sans f-faint" font-size="11">Catalogs are keyed by plugin id, so two plugins may translate the same English string differently.</text>
+      </svg>
+      <figcaption>
+        The language pack discovers what to translate rather than being told. Because catalogs are
+        namespaced by plugin id, a third-party plugin gets its own translation domain &mdash; and an
+        untranslated plugin degrades to English instead of failing.
+      </figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>Sequence</h2>
+    <p class="section-note">
+      Ordered by dependency: each step is independently useful, and steps 2&ndash;4 need no further
+      maintainer review.
+    </p>
+
+    <div class="phase is-core">
+      <div class="idx">01</div>
+      <div>
+        <h3>Land the primitive <span class="chip core"><span class="dot"></span>Upstream</span></h3>
+        <p>
+          Mechanism only: <code>I18n.qml</code>, <code>I18nModel.js</code>, <code>qmldir</code>,
+          <code>default/bash/i18n</code>, docs, tests. No call sites, no catalogs. Reviewable as a
+          no-op.
+        </p>
+      </div>
+    </div>
+
+    <div class="phase is-core">
+      <div class="idx">02</div>
+      <div>
+        <h3>Convert call sites, plugin by plugin <span class="chip core"><span class="dot"></span>Upstream</span></h3>
+        <p>
+          One small PR per plugin, each independently revertible: <code>bar</code>,
+          <code>menu</code>, <code>notifications</code>, <code>lock</code>, then the
+          <code>panels</code> tree. PR #7434 has already done this work &mdash; it only needs
+          splitting.
+        </p>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="idx">03</div>
+      <div>
+        <h3>Stand up the hub <span class="chip comm"><span class="dot"></span>Community</span></h3>
+        <p>
+          Extraction CI, the POT, and the first PO catalogs. Publishes a coverage report per plugin
+          version so drift is visible rather than discovered.
+        </p>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="idx">04</div>
+      <div>
+        <h3>Publish the first language pack <span class="chip comm"><span class="dot"></span>Community</span></h3>
+        <p>
+          <code>omarchy-lang-ca</code> as proof of the whole chain, installable with
+          <code>omarchy plugin add</code>. Weblate can attach at any point after this without
+          changing the architecture.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Open questions</h2>
+    <p class="section-note">Worth settling with maintainers before code.</p>
+
+    <div class="q">
+      <h3>Should security-surface strings be translatable at all?</h3>
+      <p>
+        The polkit agent and lock screen render text that an attacker would love to reword.
+        Catalogs are data, not code, so nothing executes &mdash; but a hostile catalog could reword
+        an authentication prompt. Options: keep those domains first-party-only, or exclude them.
+      </p>
+    </div>
+
+    <div class="q">
+      <h3>Does a plugin declare its translation domain, or is the id enough?</h3>
+      <p>
+        The plugin id already works as an implicit domain and needs no manifest change. An explicit
+        <code>"translations"</code> field would be more legible but adds schema surface for little
+        gain.
+      </p>
+    </div>
+
+    <div class="q">
+      <h3>Who owns the language-pack namespace?</h3>
+      <p>
+        The registry reserves <code>omarchy.*</code> for first-party plugins, so community packs
+        need a different prefix &mdash; <code>lang.ca</code> is the simplest. If packs ever ship with
+        the distro, they would move to <code>omarchy.lang.ca</code>.
+      </p>
+    </div>
+
+    <div class="q">
+      <h3>Is a gettext toolchain acceptable in CI?</h3>
+      <p>
+        It adds nothing to the runtime &mdash; users still get plain JSON and no new packages. But
+        <code>msgmerge</code> and <code>msgfmt</code> would become contributor-side dependencies for
+        anyone regenerating catalogs.
+      </p>
+    </div>
+  </section>
+
+  <footer class="doc">
+    Measurements taken against <code>basecamp/omarchy@quattro</code> v4.0.1.<br>
+    Shell source: 175 files, ~37k lines QML. 90-day churn in <code>shell/</code>: +18,959 / &minus;11,404 across 316 commits.<br>
+    Distinct English string literals in <code>shell/</code>: ~343.
+  </footer>
+
+</div>
+
+</body>
+</html>
