@@ -193,6 +193,19 @@
 
   a { color: var(--core); }
 
+  pre.block {
+    font-family: var(--mono);
+    font-size: 0.83rem;
+    line-height: 1.55;
+    background: var(--surface-2);
+    border-radius: 4px;
+    padding: 14px 18px;
+    margin: 0 0 16px;
+    overflow-x: auto;
+  }
+  pre.block code { background: none; padding: 0; font-size: inherit; }
+  pre.block .cm { color: var(--faint); }
+
   /* ---------- ownership chips ---------- */
 
   .chip {
@@ -469,7 +482,7 @@
     <h1>Omarchy Localization Architecture</h1>
     <p class="lede">
       A four-part system for translating the Omarchy shell. Only one part &mdash; roughly
-      <strong>250 additive lines</strong> &mdash; needs to live in <code>basecamp/omarchy</code>.
+      <strong>300 additive lines</strong> &mdash; needs to live in <code>basecamp/omarchy</code>.
       Catalogs, translator tooling, and language packs all sit outside the repo and cost
       maintainers nothing to carry.
     </p>
@@ -497,7 +510,7 @@
         sitting and safe to revert.
       </p>
       <div class="stat-row">
-        <div class="stat"><span class="n">~250</span><span class="k">lines upstream</span></div>
+        <div class="stat"><span class="n">~300</span><span class="k">lines upstream &#183; to be measured</span></div>
         <div class="stat"><span class="n">6</span><span class="k">files touched</span></div>
         <div class="stat"><span class="n">0</span><span class="k">runtime deps added</span></div>
         <div class="stat"><span class="n">0</span><span class="k">call sites changed</span></div>
@@ -508,7 +521,7 @@
       <p>
         Everything downstream of that primitive &mdash; extraction tooling, PO catalogs, a Weblate
         instance, per-language packs &mdash; is community-maintained in separate repositories.
-        Maintainers never review a translation, and a stale or hostile catalog cannot break a
+        Maintainers never review a translation, and a stale or malformed catalog cannot break a
         shell that falls back to English by construction.
       </p>
     </div>
@@ -547,7 +560,7 @@
         <!-- B1 shell source -->
         <rect x="52" y="88" width="248" height="76" rx="4" class="box"/>
         <text x="68" y="114" class="mono f-ink" font-size="12.5" font-weight="600">shell/**/*.qml</text>
-        <text x="68" y="134" class="mono f-muted" font-size="11">I18n.tr("Connect")</text>
+        <text x="68" y="134" class="mono f-muted" font-size="11">_.tr("Connect")</text>
         <text x="68" y="151" class="sans f-faint" font-size="11">English is the key</text>
 
         <!-- B6 singleton -->
@@ -583,7 +596,7 @@
         <!-- B1 down to B2 -->
         <line x1="150" y1="164" x2="150" y2="266" class="flow" marker-end="url(#ah)"/>
         <text x="162" y="212" class="mono f-muted" font-size="11">extract</text>
-        <text x="162" y="228" class="mono f-faint" font-size="10">on every release</text>
+        <text x="162" y="228" class="mono f-faint" font-size="10">tracks quattro HEAD</text>
 
         <!-- B2 to B3 -->
         <line x1="248" y1="310" x2="306" y2="310" class="flow" marker-end="url(#ah)"/>
@@ -595,19 +608,19 @@
 
         <!-- B4 down to B5 -->
         <path d="M 712 348 L 712 400 L 560 400 L 560 446" class="flow" marker-end="url(#ah)"/>
-        <text x="576" y="393" class="mono f-muted" font-size="11">omarchy plugin add / update</text>
+        <text x="576" y="393" class="mono f-muted" font-size="11">omarchy plugin add --enable / update</text>
 
         <!-- B5 up to B6 -->
         <path d="M 736 470 L 826 470 L 826 170" fill="none" class="flow-core" marker-end="url(#ahc)"/>
-        <text x="838" y="330" class="mono f-core" font-size="11">registerCatalog(</text>
-        <text x="838" y="346" class="mono f-core" font-size="11">&#160;&#160;domain, json)</text>
+        <text x="838" y="330" class="mono f-core" font-size="11">setCatalogs(</text>
+        <text x="838" y="346" class="mono f-core" font-size="11">&#160;&#160;owner, {domain: json})</text>
 
         <!-- B6 back to B1 -->
         <path d="M 700 126 L 306 126" fill="none" class="flow-core" marker-end="url(#ahc)"/>
         <text x="428" y="117" class="mono f-core" font-size="11">tr() resolves &#8594; "Connecta"</text>
       </svg>
       <figcaption>
-        The loop closes inside the upstream band: the same <code>I18n.tr()</code> call that produced
+        The loop closes inside the upstream band: the same <code>tr()</code> call that produced
         the extracted string is the one that renders the translation. Everything between the two
         arrows in that band happens in repositories Omarchy maintainers do not own.
       </figcaption>
@@ -636,7 +649,7 @@
             </td>
             <td><span class="nm">shell/Commons/</span><span class="sub">I18n.qml, I18nModel.js</span></td>
             <td><span class="chip core"><span class="dot"></span>Upstream</span></td>
-            <td>Locale selection, catalog registry, plural rules, <code>tr()</code> / <code>ntr()</code></td>
+            <td>Locale selection, catalog registry, plural rules, <code>tr()</code> / <code>ntr()</code>, startup cache</td>
           </tr>
           <tr>
             <td>
@@ -645,7 +658,7 @@
             </td>
             <td><span class="nm">default/bash/i18n</span><span class="sub">sourced by bin/ scripts</span></td>
             <td><span class="chip core"><span class="dot"></span>Upstream</span></td>
-            <td>Same lookup for the ~35 interactive CLI scripts</td>
+            <td>Same lookup for the ~35 interactive CLI scripts, from the cache file</td>
           </tr>
           <tr>
             <td>
@@ -680,21 +693,27 @@
         <span class="chip core"><span class="dot"></span>Upstream</span>
       </div>
       <p>
-        The runtime primitive, largely as written in PR #7434: a <code>pragma Singleton</code>
+        The runtime primitive, building on PR #7434: a <code>pragma Singleton</code>
         exported from the <code>qs.Commons</code> module, backed by a dependency-free
         <code>I18nModel.js</code> that is unit-testable outside QML.
       </p>
       <dl>
         <dt>Exposes</dt>
-        <dd><code>tr(source, args)</code>, <code>ntr(count, singular, plural, args)</code>, <code>registerCatalog(domain, json)</code></dd>
+        <dd><code>tr(source, args)</code>, <code>trc(context, source, args)</code>, <code>ntr(count, singular, plural, args)</code>, <code>noop(source)</code>, <code>domain(id)</code>, <code>setCatalogs(ownerId, catalogs)</code>, <code>revision</code></dd>
         <dt>Selects</dt>
         <dd><code>LANGUAGE</code> &#8594; <code>LC_ALL</code> &#8594; <code>LC_MESSAGES</code> &#8594; <code>LANG</code>, with regional fallback (<code>ca_ES</code> &#8594; <code>ca</code>)</dd>
         <dt>Resolves</dt>
-        <dd>Per key along a domain chain: plugin <code>id</code> &#8594; <code>clonedFrom</code> &#8594; English source</dd>
+        <dd>Per key; bound callers walk <code>domain</code> &#8594; <code>clonedFrom</code> &#8594; global merge &#8594; English source, unbound callers skip straight to the global merge (see <a href="#runtime-contract">Runtime contract</a>)</dd>
+        <dt>Reserved domains</dt>
+        <dd><code>omarchy.shell</code> for <code>shell/Ui</code> and <code>shell/services</code>, <code>omarchy.cli</code> for <code>bin/</code>; neither has a plugin id</dd>
+        <dt>Reactive</dt>
+        <dd>Every lookup reads <code>revision</code>, so QML bindings re-evaluate when a catalog registers</dd>
+        <dt>Startup</dt>
+        <dd>Loads <code>~/.cache/omarchy/i18n/&lt;locale&gt;.json</code> synchronously before the first frame; language packs refresh that file after the registry scan</dd>
         <dt>Fallback</dt>
         <dd>Missing domain, missing key, or malformed catalog all yield the English source string</dd>
         <dt>Changes vs #7434</dt>
-        <dd>Multi-source catalogs keyed by domain rather than one global file; CLDR plural rules rather than a hardcoded two-form test</dd>
+        <dd>Catalogs keyed by domain rather than one global file; scoped lookup via <code>domain(id)</code>; owned registration with an inverse; CLDR plural rules rather than a hardcoded two-form test; <code>noop()</code> for strings defined away from their use; the startup cache</dd>
       </dl>
     </div>
 
@@ -704,15 +723,19 @@
         <span class="chip core"><span class="dot"></span>Upstream</span>
       </div>
       <p>
-        Roughly 30 lines of Bash sourced by the interactive <code>bin/</code> scripts, reading the
-        same compiled JSON. It exists because a meaningful share of Omarchy's user-facing text is
-        <code>gum</code> prompts and <code>--help</code> output, not QML.
+        Roughly 30 lines of Bash sourced by the interactive <code>bin/</code> scripts. These run
+        outside the shell process &mdash; on a tty, over ssh, under <code>sudo</code> &mdash; so they
+        cannot ask the singleton. They read the same <code>~/.cache/omarchy/i18n/&lt;locale&gt;.json</code>
+        the primitive maintains: one file, no plugin enumeration, no knowledge of which language
+        packs exist. <code>jq</code> is already a dependency of the plugin tooling.
       </p>
       <dl>
         <dt>Constraint</dt>
         <dd>Must be <code>set -u</code> safe &mdash; several callers enable nounset before sourcing</dd>
         <dt>Never touches</dt>
         <dd>Command routes, flag names, or machine-readable JSON output</dd>
+        <dt>Plurals</dt>
+        <dd>A small evaluator for the <code>plural-forms</code> header; the CLI needs a handful of plural strings</dd>
       </dl>
     </div>
 
@@ -728,11 +751,13 @@
       </p>
       <dl>
         <dt>Holds</dt>
-        <dd><code>core/&lt;locale&gt;.po</code> and <code>plugins/&lt;plugin-id&gt;/&lt;locale&gt;.po</code></dd>
+        <dd><code>core/&lt;locale&gt;.po</code> (the <code>omarchy.shell</code> and <code>omarchy.cli</code> domains) and <code>plugins/&lt;plugin-id&gt;/&lt;locale&gt;.po</code></dd>
         <dt>Tooling</dt>
-        <dd><code>omarchy-i18n-extract</code> (QML &#8594; POT), <code>omarchy-i18n-build</code> (PO &#8594; namespaced JSON)</dd>
+        <dd><code>omarchy-i18n-extract</code> (QML &#8594; POT, domain derived from file path and verified against the file's declared binding), <code>omarchy-i18n-build</code> (PO &#8594; namespaced JSON)</dd>
         <dt>Why PO</dt>
         <dd>Plural rules, <code>msgctxt</code> disambiguation, developer comments, and &mdash; critically &mdash; <code>msgmerge</code> fuzzy state for tracking upstream drift</dd>
+        <dt>Collision check</dt>
+        <dd>The build warns when two domains translate one <code>msgid</code> differently, since that is exactly the case an unbound caller would get wrong</dd>
         <dt>Later</dt>
         <dd>Weblate attaches to this repo with no change to the layout</dd>
       </dl>
@@ -750,11 +775,15 @@
       </p>
       <dl>
         <dt>Manifest</dt>
-        <dd><code>{ "id": "lang.ca", "kinds": ["service"], "keepLoaded": true }</code></dd>
+        <dd><code>{ "id": "lang.ca", "kinds": ["service"] }</code></dd>
         <dt>Contains</dt>
         <dd><code>Service.qml</code> (~60 lines) plus <code>catalogs/&lt;plugin-id&gt;.json</code></dd>
+        <dt>Behaviour</dt>
+        <dd>Checks that its locale is among the active candidates, then registers one catalog per installed and enabled plugin; re-runs on <code>pluginsChanged()</code>; registration is owned, so disabling the pack removes its catalogs</dd>
         <dt>Distribution</dt>
-        <dd><code>omarchy plugin add &lt;url&gt;</code>; refreshed by the existing <code>omarchy plugin update</code>, which already fetches, shows a diff, and confirms</dd>
+        <dd><code>omarchy plugin add &lt;url&gt; --enable</code> (third-party plugins install disabled by default); refreshed by the existing <code>omarchy plugin update</code>, which already fetches, shows a diff, and confirms</dd>
+        <dt>Trust</dt>
+        <dd>Catalogs are data, but the pack itself is a plugin with QML that runs unsandboxed; enabling one is trusting code, exactly as with any other plugin</dd>
         <dt>If blessed</dt>
         <dd>Could later ship first-party as <code>omarchy.lang.ca</code> with no design change</dd>
       </dl>
@@ -766,7 +795,7 @@
     <p class="section-note">The question that most shapes the proposal.</p>
 
     <div class="col">
-      <p>The translator itself cannot be a plugin, for three concrete reasons:</p>
+      <p>The translator itself cannot be a plugin, for two concrete reasons:</p>
       <ul>
         <li>
           <strong>Core UI needs it.</strong> <code>shell/Ui/ConfirmDialog.qml</code>,
@@ -778,21 +807,26 @@
           <code>import qs.Commons</code>. A singleton in that namespace is available to every
           plugin with zero wiring; a plugin cannot provide one.
         </li>
-        <li>
-          <strong>Load order.</strong> The registry scan is a <code>Process</code>, so it completes
-          asynchronously after the bar has already rendered. A plugin-provided translator would
-          produce a visible flash of English on every login.
-        </li>
       </ul>
       <p>
         Catalogs have the opposite profile: large, frequently updated, locale-specific, and of no
         interest to a user who doesn't speak the language. Those are exactly the properties the
         plugin system exists to manage.
       </p>
+      <p>
+        There is a cost to that split, and the design has to pay it explicitly. The registry scan
+        is a <code>Process</code>; <code>shell.qml</code> renders the bar before it returns, and
+        services &mdash; the language pack included &mdash; load only afterwards. Left alone, every
+        login would flash English for a few hundred milliseconds before the catalogs arrive. Two
+        mechanisms close that gap: lookups are reactive, so bindings repaint the moment a catalog
+        registers; and the primitive persists the merged catalogs to
+        <code>~/.cache/omarchy/i18n/&lt;locale&gt;.json</code> and loads that file synchronously at
+        the next start. The first login after installing a pack flashes once. No later one does.
+      </p>
     </div>
 
     <figure>
-      <svg viewBox="0 0 1020 348" role="img" aria-label="Diagram: the language pack service reads installedPlugins from the plugin registry, loads a matching catalog file per enabled plugin id, and registers each into the I18n singleton under that plugin's domain; a plugin with no catalog resolves to English.">
+      <svg viewBox="0 0 1020 440" role="img" aria-label="Diagram: the language pack service reads installedPlugins from the plugin registry, loads a matching catalog file per enabled plugin id, and registers each into the I18n singleton under that plugin's domain; a plugin with no catalog resolves to English. The singleton persists the merged catalogs to a cache file that it loads synchronously at the next start and that the Bash helper reads directly.">
         <defs>
           <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M 0 1 L 10 5 L 0 9 z" class="f-ink"/>
@@ -805,7 +839,7 @@
         <!-- registry -->
         <rect x="30" y="60" width="242" height="232" rx="4" class="box"/>
         <text x="46" y="86" class="mono f-ink" font-size="12" font-weight="600">pluginRegistry</text>
-        <text x="46" y="104" class="sans f-faint" font-size="10.5">injected by shell.qml:219</text>
+        <text x="46" y="104" class="sans f-faint" font-size="10.5">injected by shell.qml</text>
         <line x1="46" y1="116" x2="256" y2="116" class="hair"/>
         <text x="46" y="140" class="mono f-muted" font-size="11">installedPlugins {</text>
         <text x="58" y="162" class="mono f-ink" font-size="11">omarchy.bar</text>
@@ -844,9 +878,29 @@
         <text x="276" y="166" class="mono f-muted" font-size="10.5">enumerate</text>
 
         <line x1="596" y1="176" x2="686" y2="176" class="flow-core" marker-end="url(#ahc2)"/>
-        <text x="590" y="166" class="mono f-core" font-size="10.5">registerCatalog</text>
+        <text x="606" y="166" class="mono f-core" font-size="10.5">setCatalogs</text>
 
-        <text x="30" y="326" class="sans f-faint" font-size="11">Catalogs are keyed by plugin id, so two plugins may translate the same English string differently.</text>
+        <!-- cache -->
+        <rect x="692" y="330" width="296" height="60" class="box"/>
+        <text x="708" y="354" class="mono f-ink" font-size="11.5" font-weight="600">~/.cache/omarchy/i18n/ca.json</text>
+        <text x="708" y="374" class="sans f-muted" font-size="10.5">merged catalogs &#183; written on every registration</text>
+
+        <!-- cli -->
+        <rect x="368" y="330" width="228" height="60" class="box"/>
+        <text x="384" y="354" class="mono f-ink" font-size="11.5" font-weight="600">omarchy_t</text>
+        <text x="384" y="374" class="sans f-muted" font-size="10.5">bin/ scripts &#183; outside the shell process</text>
+
+        <!-- I18n <-> cache -->
+        <line x1="820" y1="292" x2="820" y2="324" class="flow-core" marker-end="url(#ahc2)"/>
+        <text x="828" y="313" class="mono f-core" font-size="10.5">persist</text>
+        <line x1="870" y1="330" x2="870" y2="298" class="flow" marker-end="url(#ah2)"/>
+        <text x="878" y="313" class="mono f-muted" font-size="10.5">sync load at next start</text>
+
+        <!-- cache -> cli -->
+        <line x1="692" y1="360" x2="602" y2="360" class="flow" marker-end="url(#ah2)"/>
+        <text x="618" y="350" class="mono f-muted" font-size="10.5">read</text>
+
+        <text x="30" y="422" class="sans f-faint" font-size="11">Catalogs are keyed by plugin id, so two plugins may translate the same English string differently.</text>
       </svg>
       <figcaption>
         The language pack discovers what to translate rather than being told. Because catalogs are
@@ -855,33 +909,65 @@
       </figcaption>
     </figure>
 
+  </section>
+
+  <section id="runtime-contract">
+    <h2>Runtime contract</h2>
+    <p class="section-note">
+      The three things every downstream piece depends on: how a call site names its domain, how a
+      key resolves, and what a catalog file looks like.
+    </p>
+
     <div class="col">
-      <h3 style="margin-top: 26px; margin-bottom: 10px;">Catalog resolution</h3>
+      <h3>Call sites</h3>
       <p>
-        Lookup happens <strong>per key</strong>, along a domain chain &mdash; not by picking one
-        domain per plugin. First hit wins:
+        A singleton cannot know which plugin called it, so a file that wants its own domain says so
+        &mdash; one line at its root, the same convention GNOME Shell extensions use with
+        <code>Gettext.domain(uuid)</code>:
       </p>
-      <p style="font-family: var(--mono); font-size: 0.88rem; background: var(--surface-2); border-radius: 4px; padding: 12px 16px;">
-        plugin's own id &#8594; omarchy.clonedFrom (if any) &#8594; English source
-      </p>
+      <pre class="block"><code>import qs.Commons
+
+Item {
+  readonly property var _: I18n.domain("dev.foo.weather")
+
+  Text { text: _.tr("Connect") }
+  Text { text: _.trc("verb", "Open") }              <span class="cm">// msgctxt disambiguation</span>
+  Text { text: _.ntr(n, "%1 city", "%1 cities", [n]) }
+}</code></pre>
       <p>
+        Core files under <code>shell/Ui</code> and <code>shell/services</code> call
+        <code>I18n.tr()</code> unbound and resolve in <code>omarchy.shell</code>. A third-party plugin
+        that never binds still works &mdash; it simply shares the global namespace. Strings defined
+        away from their use (a JS model returning <code>"Connection failed"</code> that is translated
+        later) are wrapped in <code>I18n.noop()</code> at their definition so the extractor sees them;
+        otherwise coverage silently lies, as several reviews of #7434 pointed out.
+      </p>
+
+      <h3 style="margin-top: 26px;">Resolution</h3>
+      <p>Lookup happens <strong>per key</strong>, first hit wins:</p>
+      <pre class="block"><code>bound caller:    own domain  &#8594;  omarchy.clonedFrom (if any)  &#8594;  global merge  &#8594;  English source
+unbound caller:                                                  global merge  &#8594;  English source</code></pre>
+      <p>
+        The <em>global merge</em> is every registered catalog folded into one map in precedence
+        order: originals first, clones after, so a clone's translation shadows the original's.
         <code>omarchy plugin clone</code> rewrites a plugin's manifest <code>id</code> and stamps
-        <code>omarchy.clonedFrom</code> with the original, so a cloned plugin resolves against its
-        own catalog first and falls through to the upstream catalog for everything it did not
-        change. Translations follow the same routing the shell already applies to a clone's IPC
-        calls.
+        <code>omarchy.clonedFrom</code> with the original, which is what lets a cloned plugin resolve
+        against its own catalog first and fall through to upstream's for everything it did not
+        change &mdash; the same routing the shell already applies to a clone's IPC calls.
       </p>
     </div>
 
     <div class="table-scroll narrow">
       <table>
         <thead>
-          <tr><th style="width: 52%">Case</th><th>Resolves to</th></tr>
+          <tr><th style="width: 58%">Case</th><th>Resolves to</th></tr>
         </thead>
         <tbody>
           <tr><td>Clone adds a string and translates it</td><td>clone catalog</td></tr>
           <tr><td>Clone inherits an upstream string unchanged</td><td>upstream catalog</td></tr>
           <tr><td>Clone overrides one upstream translation</td><td>clone catalog shadows it</td></tr>
+          <tr><td>Two plugins translate one English word differently, both bound</td><td>each gets its own</td></tr>
+          <tr><td>Same, but a caller is unbound</td><td>whichever registered last &mdash; the collision the hub's build warns about</td></tr>
           <tr><td>String translated nowhere</td><td>English source</td></tr>
         </tbody>
       </table>
@@ -889,20 +975,50 @@
 
     <div class="col">
       <p>
-        The consequence worth designing for: a clone's catalog is a <strong>sparse overlay</strong>,
-        so its author writes only the deltas instead of maintaining a full copy. This mirrors how
-        gettext's <code>LANGUAGE</code> preference list already behaves, so the semantics should be
-        familiar to translators.
+        A clone's catalog is therefore a <strong>sparse overlay</strong>: its author writes only the
+        deltas. This mirrors how gettext's <code>LANGUAGE</code> preference list already behaves, so
+        the semantics should be familiar to translators.
       </p>
+
+      <h3 style="margin-top: 26px;">Catalog format</h3>
+      <p>
+        One JSON object per domain, in the shape <code>po2json</code>/Jed produce and Weblate reads,
+        so the compile step is an off-the-shelf tool:
+      </p>
+      <pre class="block"><code>{
+  "": { "language": "ca", "plural-forms": "nplurals=2; plural=(n != 1);", "source": "quattro@1ccdc20" },
+  "Connect": "Connecta",
+  "verb\u0004Open": "Obre",
+  "%1 city": ["%1 ciutat", "%1 ciutats"]
+}</code></pre>
+      <ul>
+        <li>The <code>""</code> header carries the locale, the CLDR plural rule the runtime evaluates, and the upstream commit the catalog was extracted from &mdash; which is what lets the hub publish coverage per plugin version</li>
+        <li><code>msgctxt</code> is encoded as <code>context\u0004msgid</code>, the gettext convention</li>
+        <li>Plural entries are arrays indexed by the plural rule's result</li>
+        <li>PO entries carry the <code>qt-format</code> flag so Weblate validates <code>%1</code> placeholders</li>
+      </ul>
     </div>
   </section>
 
   <section>
     <h2>Sequence</h2>
     <p class="section-note">
-      Ordered by dependency: each step is independently useful, and steps 2&ndash;4 need no further
-      maintainer review.
+      Ordered by dependency. Step 0 exists so the primitive never arrives as a bare no-op: by the
+      time a PR opens, the whole chain has been seen running.
     </p>
+
+    <div class="phase">
+      <div class="idx">00</div>
+      <div>
+        <h3>Prototype end to end <span class="chip comm"><span class="dot"></span>this repo</span></h3>
+        <p>
+          The primitive applied to a dev-linked <code>quattro</code> checkout, the
+          <code>omarchy.menu</code> call sites converted, a hand-built <code>omarchy-lang-ca</code>,
+          and a clone of the patched menu to exercise the <code>clonedFrom</code> chain. Screenshots
+          come from this.
+        </p>
+      </div>
+    </div>
 
     <div class="phase is-core">
       <div class="idx">01</div>
@@ -911,7 +1027,7 @@
         <p>
           Mechanism only: <code>I18n.qml</code>, <code>I18nModel.js</code>, <code>qmldir</code>,
           <code>default/bash/i18n</code>, docs, tests. No call sites, no catalogs. Reviewable as a
-          no-op.
+          no-op, presented with the prototype as evidence.
         </p>
       </div>
     </div>
@@ -921,10 +1037,10 @@
       <div>
         <h3>Convert call sites, plugin by plugin <span class="chip core"><span class="dot"></span>Upstream</span></h3>
         <p>
-          One small PR per plugin, each independently revertible: <code>bar</code>,
-          <code>menu</code>, <code>notifications</code>, <code>lock</code>, then the
-          <code>panels</code> tree. PR #7434 has already done this work &mdash; it only needs
-          splitting.
+          One small PR per plugin, each independently revertible: <code>menu</code>,
+          <code>bar</code>, <code>notifications</code>, <code>lock</code>, then the
+          <code>panels</code> tree. Each adds the domain binding line and wraps its strings.
+          PR #7434 has already done most of this work &mdash; it only needs splitting.
         </p>
       </div>
     </div>
@@ -945,7 +1061,7 @@
       <div>
         <h3>Publish the first language pack <span class="chip comm"><span class="dot"></span>Community</span></h3>
         <p>
-          <code>omarchy-lang-ca</code> as proof of the whole chain, installable with
+          <code>omarchy-lang-ca</code> as the generated artifact of step 3, installable with
           <code>omarchy plugin add</code>. Weblate can attach at any point after this without
           changing the architecture.
         </p>
@@ -960,18 +1076,12 @@
     <div class="q">
       <h3>Should security-surface strings be translatable at all?</h3>
       <p>
-        The polkit agent and lock screen render text that an attacker would love to reword.
-        Catalogs are data, not code, so nothing executes &mdash; but a hostile catalog could reword
-        an authentication prompt. Options: keep those domains first-party-only, or exclude them.
-      </p>
-    </div>
-
-    <div class="q">
-      <h3>Does a plugin declare its translation domain, or is the id enough?</h3>
-      <p>
-        The plugin id already works as an implicit domain and needs no manifest change. An explicit
-        <code>"translations"</code> field would be more legible but adds schema surface for little
-        gain.
+        The polkit agent and lock screen render text an attacker would love to reword. A language
+        pack is a plugin the user chose to enable, so a hostile one is no worse than any hostile
+        plugin &mdash; but the primitive has no way to tell who registered a catalog, so
+        &ldquo;first-party catalogs only for those domains&rdquo; is not implementable as stated. The
+        honest v1 options are: those strings stay English, or they ship only through a first-party
+        pack.
       </p>
     </div>
 
@@ -988,7 +1098,7 @@
       <h3>Should a plugin be able to bundle its own catalogs?</h3>
       <p>
         A plugin could ship <code>translations/&lt;locale&gt;.json</code> inside its own directory,
-        prepended to the domain chain, letting third-party authors localize without going through
+        prepended to its domain chain, letting third-party authors localize without going through
         the hub at all. It is one more link in a mechanism that already exists &mdash; but it splits
         catalogs across two places, weakens the hub as a single source of truth, and leaves
         translators without an obvious place to contribute. Undecided.

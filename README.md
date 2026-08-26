@@ -65,9 +65,9 @@ flowchart LR
 
 Two decisions carry most of the design:
 
-- **The primitive is core, not a plugin.** Core `shell/Ui/` components need it, `import qs.Commons`
-  can't be satisfied by a plugin, and the registry scan is async — a plugin-provided translator
-  would flash English on every login.
+- **The primitive is core, not a plugin.** Core `shell/Ui/` components need it, and
+  `import qs.Commons` can't be satisfied by a plugin. Language packs load late, after the async
+  registry scan, so the primitive caches merged catalogs and reloads them before the first frame.
 - **A language pack *is* a plugin.** That inherits install, update-with-diff-review,
   enable/disable, and the plugins UI from machinery Omarchy already ships.
 
@@ -90,7 +90,7 @@ translator comments, and `msgmerge` fuzzy state — which is the only real answe
   catalogs" by @massisalva. A complete, working implementation: `I18n` singleton, `%1`
   interpolation, a Bash helper, tests, and a Spanish catalog. **Open, unreviewed by maintainers,
   currently conflicting.** At 86 files and +2154/−453 it is too large a unit to review against a
-  branch moving this fast — the plan here is to reuse its design and land the ~250-line mechanism
+  branch moving this fast — the plan here is to reuse its design and land the ~300-line mechanism
   on its own first.
 - [basecamp/omarchy#6360](https://github.com/basecamp/omarchy/issues/6360) — clock widget
   ignores system locale for weekday and month names. Closed pending a comprehensive translation
@@ -102,10 +102,12 @@ translator comments, and `msgmerge` fuzzy state — which is the only real answe
 
 ## Next steps
 
-1. Cut the mechanism-only branch from #7434 and verify the real line count
-2. Add CLDR plural rules and domain-namespaced catalogs to the primitive
-3. Take the proposal to the maintainers
-4. Build `omarchy-lang-ca` as an end-to-end proof
+1. Build the primitive here: `I18nModel.js` first (domain chain, plural rules, tests), then
+   `I18n.qml` with the startup cache and reactive lookups
+2. Prototype end to end on a dev-linked `quattro` checkout — `omarchy.menu` converted, a
+   hand-built `omarchy-lang-ca`, a clone of the patched menu to exercise `clonedFrom`
+3. Cut the mechanism-only branch and measure the real line count
+4. Take the proposal and the running prototype to the maintainers
 
 ## License
 
