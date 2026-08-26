@@ -83,6 +83,17 @@ translator comments, and `msgmerge` fuzzy state — which is the only real answe
 |---|---|
 | `omarchy-l10n-architecture.md` | The architecture proposal, for maintainers |
 | `omarchy-l10n-architecture.html` | Same document, standalone browser version |
+| `prototype/shell/Commons/I18n.qml` | The primitive: `qs.Commons.I18n` singleton — env, cache file, reactivity |
+| `prototype/shell/Commons/I18nModel.js` | Its Qt-free core: locale rules, interpolation, plural rules, the catalog registry |
+| `prototype/shell/Commons/qmldir` | Upstream's `qmldir` plus the one line that exports `I18n` |
+| `prototype/default/bash/i18n` | `omarchy_t` / `omarchy_tn` for the interactive `bin/` scripts |
+| `prototype/test/` | `npm test` — 40 node tests for the model, 31 Bash tests for the helper |
+
+The `prototype/` tree mirrors Omarchy's layout, so the four upstream files drop into a dev-linked
+checkout unchanged. Together they are **744 lines including comments** — the figure the
+architecture doc quotes as "~300, to be measured". The QML file cannot be executed here (no Qt on
+this machine); it is written against the `FileView` and `Quickshell` APIs as read from the
+Quickshell source, and needs a real Omarchy session to verify.
 
 ## Prior art
 
@@ -90,7 +101,7 @@ translator comments, and `msgmerge` fuzzy state — which is the only real answe
   catalogs" by @massisalva. A complete, working implementation: `I18n` singleton, `%1`
   interpolation, a Bash helper, tests, and a Spanish catalog. **Open, unreviewed by maintainers,
   currently conflicting.** At 86 files and +2154/−453 it is too large a unit to review against a
-  branch moving this fast — the plan here is to reuse its design and land the ~300-line mechanism
+  branch moving this fast — the plan here is to reuse its design and land the ~750-line mechanism
   on its own first.
 - [basecamp/omarchy#6360](https://github.com/basecamp/omarchy/issues/6360) — clock widget
   ignores system locale for weekday and month names. Closed pending a comprehensive translation
@@ -102,11 +113,10 @@ translator comments, and `msgmerge` fuzzy state — which is the only real answe
 
 ## Next steps
 
-1. Build the primitive here: `I18nModel.js` first (domain chain, plural rules, tests), then
-   `I18n.qml` with the startup cache and reactive lookups
+1. ~~Build the primitive here~~ — done; see `prototype/`
 2. Prototype end to end on a dev-linked `quattro` checkout — `omarchy.menu` converted, a
    hand-built `omarchy-lang-ca`, a clone of the patched menu to exercise `clonedFrom`
-3. Cut the mechanism-only branch and measure the real line count
+3. Cut the mechanism-only branch from the prototype
 4. Take the proposal and the running prototype to the maintainers
 
 ## License

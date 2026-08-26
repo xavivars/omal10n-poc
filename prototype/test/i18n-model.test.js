@@ -328,6 +328,23 @@ test("snapshot: a live pack overrides the cache as soon as it registers", () => 
   assert.equal(fresh.translate("Refresh", { domain: "omarchy.menu" }), "Refresh")
 })
 
+test("snapshot: excludes the cache owner, so a disabled pack does not come back", () => {
+  const first = withClone()
+  const login2 = M.createRegistry()
+  login2.loadSnapshot(first.snapshot())
+  // the pack registers, then the user disables it
+  login2.setCatalogs("lang.ca", { "omarchy.menu": { Connect: "Connecta" } })
+  login2.clearOwner("lang.ca")
+  const written = login2.snapshot()
+  assert.deepEqual(written.catalogs, {})
+  assert.deepEqual(written.links, {})
+  // and the cache is still serving this session until restart, by design
+  assert.equal(login2.translate("Refresh", { domain: "omarchy.menu" }), "Actualitza")
+  const login3 = M.createRegistry()
+  login3.loadSnapshot(written)
+  assert.equal(login3.translate("Refresh", { domain: "omarchy.menu" }), "Refresh")
+})
+
 test("snapshot: rejects unknown versions", () => {
   const reg = M.createRegistry()
   assert.equal(reg.loadSnapshot({ version: 2 }), false)

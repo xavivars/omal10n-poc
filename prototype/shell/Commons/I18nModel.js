@@ -235,12 +235,11 @@ function createRegistry() {
   var nextOrder = 0
   var state = { revision: 0, merged: {}, global: {}, parents: {}, plurals: {} }
 
-  function rebuild() {
-    var list = []
-    for (var id in owners) list.push(owners[id])
+  // Fold a list of owners into { merged, parents, plurals, global }.
+  function computeState(list) {
     // Lower precedence number wins. Among equals, the later registration
     // wins, which is what lets a pack refresh itself by re-registering.
-    list.sort(function(a, b) {
+    list = list.slice().sort(function(a, b) {
       return a.precedence !== b.precedence ? b.precedence - a.precedence : a.order - b.order
     })
 
@@ -275,10 +274,21 @@ function createRegistry() {
     }
     for (var o = 0; o < domainOrder.length; o++) fold(domainOrder[o], 0)
 
-    state.merged = merged
-    state.global = global
-    state.parents = parents
-    state.plurals = plurals
+    return { merged: merged, global: global, parents: parents, plurals: plurals }
+  }
+
+  function ownerList(excludeId) {
+    var list = []
+    for (var id in owners) if (id !== excludeId) list.push(owners[id])
+    return list
+  }
+
+  function rebuild() {
+    var next = computeState(ownerList())
+    state.merged = next.merged
+    state.global = next.global
+    state.parents = next.parents
+    state.plurals = next.plurals
     state.revision++
   }
 
@@ -373,18 +383,24 @@ function createRegistry() {
 
   // Serializable view of the merged state, for the startup cache. Loading it
   // back registers it as one owner at the lowest precedence, so live packs
-  // override it as soon as they register.
-  function snapshot() {
+  // override it as soon as they register. The snapshot excludes that owner:
+  // otherwise disabling every pack would write the old cache back out and
+  // the translations would return at the next login.
+  var CACHE_OWNER = "cache"
+
+  function snapshot(options) {
+    var exclude = options && options.exclude !== undefined ? options.exclude : CACHE_OWNER
+    var view = computeState(ownerList(exclude))
     var catalogs = {}
-    for (var domain in state.merged) catalogs[domain] = state.merged[domain]
+    for (var domain in view.merged) catalogs[domain] = view.merged[domain]
     var links = {}
-    for (var child in state.parents) links[child] = state.parents[child]
+    for (var child in view.parents) links[child] = view.parents[child]
     return { version: 1, catalogs: catalogs, links: links }
   }
 
   function loadSnapshot(snap, ownerId) {
     if (!snap || typeof snap !== "object" || snap.version !== 1) return false
-    setCatalogs(ownerId || "cache", snap.catalogs, { links: snap.links, precedence: 1000 })
+    setCatalogs(ownerId || CACHE_OWNER, snap.catalogs, { links: snap.links, precedence: 1000 })
     return true
   }
 

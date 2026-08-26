@@ -1,7 +1,7 @@
 # Omarchy Localization Architecture
 
-A four-part system for translating the Omarchy shell. Only one part — roughly **300 additive
-lines** — needs to live in `basecamp/omarchy`. Catalogs, translator tooling, and language packs
+A four-part system for translating the Omarchy shell. Only one part — roughly **750 additive
+lines**, half of them comments — needs to live in `basecamp/omarchy`. Catalogs, translator tooling, and language packs
 all sit outside the repo and cost maintainers nothing to carry.
 
 | | |
@@ -23,9 +23,9 @@ pure-JS model, and a Bash counterpart for the CLI scripts. It ships with *zero* 
 With no catalog present, `I18n.tr("Connect")` returns `"Connect"`. The change is a provable no-op
 on a stock install, which makes it reviewable in one sitting and safe to revert.
 
-| ~300 | 6 | 0 | 0 |
+| 744 | 4 + 1 | 0 | 0 |
 |:--|:--|:--|:--|
-| lines upstream (to be measured) | files touched | runtime deps added | call sites changed |
+| lines upstream (≈540 without comments) | files, plus one `qmldir` line | runtime deps added | call sites changed |
 
 Everything downstream of that primitive — extraction tooling, PO catalogs, a Weblate instance,
 per-language packs — is community-maintained in separate repositories. Maintainers never review a

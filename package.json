@@ -4,6 +4,6 @@
   "description": "Localization architecture and prototype for the Omarchy 4 shell",
   "license": "MIT",
   "scripts": {
-    "test": "node --test 'prototype/test/*.test.js'"
+    "test": "node --test 'prototype/test/*.test.js' && bash prototype/test/i18n-bash.test.sh"
   }
 }
