@@ -46,26 +46,30 @@ the catalogs follow upstream as it moves.
 Nothing in `prototype/` has been executed on a real session yet — there is no Qt on
 the machine this was written on. The QML is written against the `FileView` and
 `Quickshell` APIs as read from the Quickshell source and as `shell.qml` itself uses
-them. This is the checklist for the first run.
-
-**1. Dev-link a checkout with the patches applied**
+them. `demo.sh` does the setup; this is what it does and what to do around it.
 
 ```sh
-git clone -b quattro https://github.com/basecamp/omarchy ~/src/omarchy
-git -C ~/src/omarchy am ~/omal10n-poc/prototype/patches/*.patch
-omarchy dev link ~/src/omarchy     # takes effect on reboot
+prototype/demo.sh setup      # clone quattro → git am patches → install pack → omarchy dev link
+# reboot — dev link only takes effect for a fresh session
+prototype/demo.sh enable     # omarchy plugin enable lang.ca && omarchy restart shell
+prototype/demo.sh status     # what the session sees: path, plugin, cache, bash helper, log
 ```
 
-**2. Install the language pack, enabled**
+The session locale is read from `LANG` / `LC_MESSAGES` / `LC_ALL` / `LANGUAGE` as the
+shell process inherits them — `omarchy restart shell` spawns via Hyprland precisely so
+it gets the session environment, not a terminal's. A session already running with a
+Catalan `LANG` needs nothing else.
 
-```sh
-cp -r ~/omal10n-poc/prototype/omarchy-lang-ca ~/.config/omarchy/plugins/
-omarchy plugin enable lang.ca      # third-party plugins land disabled
-```
+While iterating:
 
-**3. Set the locale and log in again**
-
-`LANG=ca_ES.UTF-8` in the session environment (or `LANGUAGE=ca`).
+| | |
+|---|---|
+| Restart the shell after editing QML | `omarchy restart shell` |
+| Shell log | `journalctl --user -t omarchy-shell -f` |
+| Is the pack seen and enabled | `omarchy-shell shell listPlugins \| jq '.[] \| select(.id=="lang.ca")'` |
+| What the pack registered | `~/.cache/omarchy/i18n/ca.json` — `jq '.catalogs \| keys'` |
+| Force the pack to re-register | `omarchy plugin disable lang.ca && omarchy plugin enable lang.ca` |
+| Undo everything | `prototype/demo.sh teardown`, then reboot |
 
 **What to look for, in order**
 
@@ -79,7 +83,7 @@ omarchy plugin enable lang.ca      # third-party plugins land disabled
 | Second login shows no flash of English | synchronous cache load before first frame |
 | `omarchy plugin disable lang.ca` → English, next login stays English | owned registration, cache not self-feeding |
 
-**4. The clone test**
+**The clone test**
 
 ```sh
 omarchy plugin clone omarchy.menu     # creates a copy with a new id
