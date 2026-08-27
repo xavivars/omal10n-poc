@@ -3,8 +3,8 @@
 Making the [Omarchy](https://omarchy.org) 4 desktop shell translatable — design work, prior-art
 notes, and (eventually) a proof-of-concept language pack.
 
-> **Status: design stage.** Nothing here is implemented yet. This repo currently holds the
-> architecture proposal that needs to go in front of the Omarchy maintainers.
+> **Status: prototype built, unrun.** The architecture proposal and a complete end-to-end
+> prototype against `quattro`. It has not yet been executed on a real Omarchy session.
 
 ## The problem
 
@@ -83,17 +83,15 @@ translator comments, and `msgmerge` fuzzy state — which is the only real answe
 |---|---|
 | `omarchy-l10n-architecture.md` | The architecture proposal, for maintainers |
 | `omarchy-l10n-architecture.html` | Same document, standalone browser version |
-| `prototype/shell/Commons/I18n.qml` | The primitive: `qs.Commons.I18n` singleton — env, cache file, reactivity |
-| `prototype/shell/Commons/I18nModel.js` | Its Qt-free core: locale rules, interpolation, plural rules, the catalog registry |
-| `prototype/shell/Commons/qmldir` | Upstream's `qmldir` plus the one line that exports `I18n` |
-| `prototype/default/bash/i18n` | `omarchy_t` / `omarchy_tn` for the interactive `bin/` scripts |
-| `prototype/test/` | `npm test` — 40 node tests for the model, 31 Bash tests for the helper |
+| `prototype/` | The whole chain, built end to end — see [`prototype/README.md`](./prototype/README.md) |
+| `prototype/patches/` | The upstream changes as a 3-patch series against `quattro`: the primitive, the menu, one CLI script |
+| `prototype/tools/` | `omarchy-i18n-extract` and `omarchy-i18n-build` — what the hub would run in CI |
+| `prototype/i18n/` | Extracted POTs and the Catalan PO files, made with real `msginit` |
+| `prototype/omarchy-lang-ca/` | The language pack, catalogs built from those PO files |
 
-The `prototype/` tree mirrors Omarchy's layout, so the four upstream files drop into a dev-linked
-checkout unchanged. Together they are **744 lines including comments** — the figure the
-architecture doc quotes as "~300, to be measured". The QML file cannot be executed here (no Qt on
-this machine); it is written against the `FileView` and `Quickshell` APIs as read from the
-Quickshell source, and needs a real Omarchy session to verify.
+`npm test` runs 40 model tests, 10 tooling tests, and 31 Bash tests. The QML has not been
+executed — there is no Qt on the machine this was written on — and `prototype/README.md` carries
+the checklist for the first run on a real Omarchy session.
 
 ## Prior art
 
@@ -113,11 +111,11 @@ Quickshell source, and needs a real Omarchy session to verify.
 
 ## Next steps
 
-1. ~~Build the primitive here~~ — done; see `prototype/`
-2. Prototype end to end on a dev-linked `quattro` checkout — `omarchy.menu` converted, a
-   hand-built `omarchy-lang-ca`, a clone of the patched menu to exercise `clonedFrom`
-3. Cut the mechanism-only branch from the prototype
-4. Take the proposal and the running prototype to the maintainers
+1. ~~Build the primitive~~ — done
+2. ~~Prototype end to end~~ — built; not yet run on a real session
+3. Run it on an Omarchy machine: dev-link, install the pack, work through the checklist in
+   `prototype/README.md`, including the clone test
+4. Take the proposal, the patch series, and screenshots to the maintainers
 
 ## License
 

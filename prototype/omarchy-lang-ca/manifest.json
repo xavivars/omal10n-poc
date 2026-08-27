@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "lang.ca",
+  "name": "Català",
+  "version": "0.1.0",
+  "author": "Omarchy l10n",
+  "description": "Catalan translations for the Omarchy shell and its plugins",
+  "kinds": [
+    "service"
+  ],
+  "entryPoints": {
+    "service": "Service.qml"
+  },
+  "omarchy": {
+    "locale": "ca"
+  }
+}

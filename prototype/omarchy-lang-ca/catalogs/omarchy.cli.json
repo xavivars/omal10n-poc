@@ -1,0 +1,13 @@
+{
+  "": {
+    "language": "ca",
+    "plural-forms": "nplurals=2; plural=(n != 1);",
+    "source": "l10n-prototype@e542adc5"
+  },
+  "Continue with update?": "Voleu continuar amb l'actualització?",
+  "Ready to update?": "Esteu a punt per a actualitzar?",
+  "Update cancelled": "S'ha cancel·lat l'actualització",
+  "What's new: %1": "Novetats: %1",
+  "• Make sure you're connected to power or have a full battery": "• Assegureu-vos que esteu connectats al corrent o que teniu la bateria plena",
+  "• You cannot stop the update once you start!": "• No podeu aturar l'actualització un cop iniciada!"
+}

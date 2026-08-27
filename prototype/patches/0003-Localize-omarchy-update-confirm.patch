@@ -1,0 +1,45 @@
+From e542adc5a14476a5043a255fc66258a86c5af1c8 Mon Sep 17 00:00:00 2001
+From: Xavi Ivars <xavi.ivars@gmail.com>
+Date: Thu, 27 Aug 2026 02:06:50 +0200
+Subject: [PATCH 3/3] Localize omarchy-update-confirm
+
+The Bash side of the primitive on one interactive script: six prompt
+strings through omarchy_t, with the release URL passed as an argument
+so translators never touch it.
+---
+ bin/omarchy-update-confirm | 14 ++++++++------
+ 1 file changed, 8 insertions(+), 6 deletions(-)
+
+diff --git a/bin/omarchy-update-confirm b/bin/omarchy-update-confirm
+index 472927f1..d1e67904 100755
+--- a/bin/omarchy-update-confirm
++++ b/bin/omarchy-update-confirm
+@@ -2,17 +2,19 @@
+ 
+ # omarchy:summary=Prompt for confirmation before starting an update
+ 
++source "$OMARCHY_PATH/default/bash/i18n"
++
+ gum style --border normal --padding "1 2" \
+-  "Ready to update?" \
++  "$(omarchy_t "Ready to update?")" \
+   "" \
+-  "• You cannot stop the update once you start!" \
+-  "• Make sure you're connected to power or have a full battery" \
++  "$(omarchy_t "• You cannot stop the update once you start!")" \
++  "$(omarchy_t "• Make sure you're connected to power or have a full battery")" \
+   "" \
+-  "What's new: https://github.com/basecamp/omarchy/releases/latest"
++  "$(omarchy_t "What's new: %1" "https://github.com/basecamp/omarchy/releases/latest")"
+ 
+ echo
+ 
+-if ! gum confirm "Continue with update?"; then
+-  echo "Update cancelled"
++if ! gum confirm "$(omarchy_t "Continue with update?")"; then
++  echo "$(omarchy_t "Update cancelled")"
+   exit 1
+ fi
+-- 
+2.49.0
+

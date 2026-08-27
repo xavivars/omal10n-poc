@@ -1,0 +1,1074 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: omarchy omarchy.menu\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-27 00:07:52+0000\n"
+"PO-Revision-Date: 2026-08-27 00:07:52+0000\n"
+"Last-Translator: Xavi Ivars <xavi.ivars@gmail.com>\n"
+"Language-Team: Catalan\n"
+"Language: ca\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Omarchy-Domain: omarchy.menu\n"
+"X-Omarchy-Source: l10n-prototype@e542adc5\n"
+
+#: default/omarchy/omarchy-menu.jsonc:about.label
+#: default/omarchy/omarchy-menu.jsonc:style.about.label
+msgid "About"
+msgstr "Quant a"
+
+#: default/omarchy/omarchy-menu.jsonc:apps.label
+msgid "Apps"
+msgstr "Aplicacions"
+
+#: default/omarchy/omarchy-menu.jsonc:install.ai.chatgpt.label
+#: default/omarchy/omarchy-menu.jsonc:remove.ai.chatgpt.label
+msgid "ChatGPT Desktop"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.ai.dictation.label
+#: default/omarchy/omarchy-menu.jsonc:remove.ai.dictation.label
+msgid "Dictation"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.ai.grok-bot.label
+#: default/omarchy/omarchy-menu.jsonc:remove.ai.grok-bot.label
+msgid "Grok Bot"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.ai.label
+#: default/omarchy/omarchy-menu.jsonc:remove.ai.label
+msgid "AI"
+msgstr "IA"
+
+#: default/omarchy/omarchy-menu.jsonc:install.ai.lm-studio.label
+#: default/omarchy/omarchy-menu.jsonc:remove.ai.lm-studio.label
+msgid "LM Studio"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.ai.ollama.label
+#: default/omarchy/omarchy-menu.jsonc:remove.ai.ollama.label
+msgid "Ollama"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.ai.t3-code.label
+#: default/omarchy/omarchy-menu.jsonc:remove.ai.t3-code.label
+msgid "T3 Code"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.aur.label
+msgid "AUR"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.development.clojure.label
+#: default/omarchy/omarchy-menu.jsonc:remove.development.clojure.label
+msgid "Clojure"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.development.docker-dbs.label
+msgid "Docker DB"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.development.dotnet.label
+#: default/omarchy/omarchy-menu.jsonc:remove.development.dotnet.label
+msgid ".NET"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.development.elixir.label
+#: default/omarchy/omarchy-menu.jsonc:install.development.elixir.elixir.label
+#: default/omarchy/omarchy-menu.jsonc:remove.development.elixir.label
+#: default/omarchy/omarchy-menu.jsonc:remove.development.elixir.elixir.label
+msgid "Elixir"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.development.elixir.phoenix.label
+#: default/omarchy/omarchy-menu.jsonc:remove.development.elixir.phoenix.label
+msgid "Phoenix"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.development.go.label
+#: default/omarchy/omarchy-menu.jsonc:remove.development.go.label
+msgid "Go"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.development.java.label
+#: default/omarchy/omarchy-menu.jsonc:remove.development.java.label
+msgid "Java"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.development.javascript.bun.label
+#: default/omarchy/omarchy-menu.jsonc:remove.development.javascript.bun.label
+msgid "Bun"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.development.javascript.deno.label
+#: default/omarchy/omarchy-menu.jsonc:remove.development.javascript.deno.label
+msgid "Deno"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.development.javascript.label
+#: default/omarchy/omarchy-menu.jsonc:remove.development.javascript.label
+msgid "JavaScript"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.development.javascript.node.label
+#: default/omarchy/omarchy-menu.jsonc:remove.development.javascript.node.label
+msgid "Node.js"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.development.label
+#: default/omarchy/omarchy-menu.jsonc:remove.development.label
+msgid "Development"
+msgstr "Desenvolupament"
+
+#: default/omarchy/omarchy-menu.jsonc:install.development.ocaml.label
+#: default/omarchy/omarchy-menu.jsonc:remove.development.ocaml.label
+msgid "OCaml"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.development.php.label
+#: default/omarchy/omarchy-menu.jsonc:install.development.php.php.label
+#: default/omarchy/omarchy-menu.jsonc:remove.development.php.label
+#: default/omarchy/omarchy-menu.jsonc:remove.development.php.php.label
+msgid "PHP"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.development.php.laravel.label
+#: default/omarchy/omarchy-menu.jsonc:remove.development.php.laravel.label
+msgid "Laravel"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.development.php.symfony.label
+#: default/omarchy/omarchy-menu.jsonc:remove.development.php.symfony.label
+msgid "Symfony"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.development.python.label
+#: default/omarchy/omarchy-menu.jsonc:remove.development.python.label
+msgid "Python"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.development.rails.label
+#: default/omarchy/omarchy-menu.jsonc:remove.development.rails.label
+msgid "Ruby on Rails"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.development.rust.label
+#: default/omarchy/omarchy-menu.jsonc:remove.development.rust.label
+msgid "Rust"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.development.scala.label
+#: default/omarchy/omarchy-menu.jsonc:remove.development.scala.label
+msgid "Scala"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.development.zig.label
+#: default/omarchy/omarchy-menu.jsonc:remove.development.zig.label
+msgid "Zig"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.gaming.battlenet.label
+#: default/omarchy/omarchy-menu.jsonc:remove.gaming.battlenet.label
+msgid "Battle.net"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.gaming.geforce-now.label
+#: default/omarchy/omarchy-menu.jsonc:remove.gaming.geforce-now.label
+msgid "NVIDIA GeForce NOW"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.gaming.heroic.label
+#: default/omarchy/omarchy-menu.jsonc:remove.gaming.heroic.label
+msgid "Heroic (Epic Games)"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.gaming.label
+#: default/omarchy/omarchy-menu.jsonc:remove.gaming.label
+msgid "Gaming"
+msgstr "Jocs"
+
+#: default/omarchy/omarchy-menu.jsonc:install.gaming.lutris.label
+#: default/omarchy/omarchy-menu.jsonc:remove.gaming.lutris.label
+msgid "Lutris"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.gaming.minecraft.label
+#: default/omarchy/omarchy-menu.jsonc:remove.gaming.minecraft.label
+msgid "Minecraft"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.gaming.retro-launcher.label
+msgid "RetroArch Game Launcher"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.gaming.retroarch.label
+#: default/omarchy/omarchy-menu.jsonc:remove.gaming.retroarch.label
+msgid "RetroArch"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.gaming.steam.label
+#: default/omarchy/omarchy-menu.jsonc:remove.gaming.steam.label
+msgid "Steam"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.gaming.xbox-cloud.label
+#: default/omarchy/omarchy-menu.jsonc:remove.gaming.xbox-cloud.label
+msgid "Xbox Cloud Gaming"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.gaming.xbox-controllers.label
+msgid "Xbox Controllers"
+msgstr "Comandaments d'Xbox"
+
+#: default/omarchy/omarchy-menu.jsonc:install.label
+msgid "Install"
+msgstr "Instal·la"
+
+#: default/omarchy/omarchy-menu.jsonc:install.package.label
+#: default/omarchy/omarchy-menu.jsonc:remove.package.label
+msgid "Package"
+msgstr "Paquet"
+
+#: default/omarchy/omarchy-menu.jsonc:install.preinstalls.label
+#: default/omarchy/omarchy-menu.jsonc:remove.preinstalls.label
+msgid "Preinstalls"
+msgstr "Preinstal·lacions"
+
+#: default/omarchy/omarchy-menu.jsonc:install.service.1password.label
+msgid "1Password"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.service.bitwarden.label
+msgid "Bitwarden"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.service.chromium-account.label
+msgid "Chromium Account"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.service.dropbox.label
+#: default/omarchy/omarchy-menu.jsonc:remove.service.dropbox.label
+msgid "Dropbox"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.service.label
+msgid "Service"
+msgstr "Servei"
+
+#: default/omarchy/omarchy-menu.jsonc:install.service.nordvpn.label
+msgid "NordVPN"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.service.once.label
+msgid "ONCE"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.service.signal.label
+msgid "Signal"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.service.spotify.label
+msgid "Spotify"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.service.tailscale.label
+#: default/omarchy/omarchy-menu.jsonc:remove.service.tailscale.label
+msgid "Tailscale"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.style.font.bitstream.label
+msgid "Bitstream Vera Mono"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.style.font.cascadia.label
+msgid "Cascadia Mono"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.style.font.fira.label
+msgid "Fira Code"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.style.font.iosevka.label
+msgid "Iosevka"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.style.font.meslo.label
+msgid "Meslo LG Mono"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.style.font.victor.label
+msgid "Victor Code"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.tui.label
+#: default/omarchy/omarchy-menu.jsonc:remove.tui.label
+msgid "TUI"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:install.webapp.label
+#: default/omarchy/omarchy-menu.jsonc:remove.webapp.label
+msgid "Web App"
+msgstr "Aplicació web"
+
+#: default/omarchy/omarchy-menu.jsonc:install.windows.label
+#: default/omarchy/omarchy-menu.jsonc:remove.windows.label
+msgid "Windows"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:learn.arch.label
+msgid "Arch"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:learn.bash.label
+msgid "Bash"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:learn.community.label
+msgid "Community"
+msgstr "Comunitat"
+
+#: default/omarchy/omarchy-menu.jsonc:learn.herdr-keybindings.label
+msgid "Herdr"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:learn.hyprland.label
+#: default/omarchy/omarchy-menu.jsonc:style.hyprland.label
+#: default/omarchy/omarchy-menu.jsonc:setup.config.hyprland.label
+#: default/omarchy/omarchy-menu.jsonc:update.config.hyprland.label
+msgid "Hyprland"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:learn.keybindings.label
+#: default/omarchy/omarchy-menu.jsonc:setup.keybindings.label
+msgid "Keybindings"
+msgstr "Dreceres de teclat"
+
+#: default/omarchy/omarchy-menu.jsonc:learn.label
+msgid "Learn"
+msgstr "Aprèn"
+
+#: default/omarchy/omarchy-menu.jsonc:learn.neovim.label
+#: default/omarchy/omarchy-menu.jsonc:setup.default.editor.neovim.label
+msgid "Neovim"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:learn.omarchy.label
+#: default/omarchy/omarchy-menu.jsonc:update.omarchy.label
+msgid "Omarchy"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:learn.tmux-keybindings.label
+#: default/omarchy/omarchy-menu.jsonc:update.config.tmux.label
+msgid "Tmux"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:remove.gaming.xbox-controllers.label
+msgid "Xbox Controllers (󰂯)"
+msgstr "Comandaments d'Xbox (󰂯)"
+
+#: default/omarchy/omarchy-menu.jsonc:remove.label
+#: default/omarchy/omarchy-menu.jsonc:remove.ai.title
+#: default/omarchy/omarchy-menu.jsonc:remove.service.title
+#: default/omarchy/omarchy-menu.jsonc:remove.development.title
+#: default/omarchy/omarchy-menu.jsonc:remove.gaming.title
+#: default/omarchy/omarchy-menu.jsonc:remove.browser.title
+#: default/omarchy/omarchy-menu.jsonc:remove.security.title
+#: default/omarchy/omarchy-menu.jsonc:remove.development.javascript.title
+#: default/omarchy/omarchy-menu.jsonc:remove.development.php.title
+#: default/omarchy/omarchy-menu.jsonc:remove.development.elixir.title
+msgid "Remove"
+msgstr "Suprimeix"
+
+#: default/omarchy/omarchy-menu.jsonc:remove.service.label
+msgid "Services"
+msgstr "Serveis"
+
+#: default/omarchy/omarchy-menu.jsonc:setup.config.hyprsunset.label
+#: default/omarchy/omarchy-menu.jsonc:update.process.hyprsunset.label
+#: default/omarchy/omarchy-menu.jsonc:update.config.hyprsunset.label
+msgid "Hyprsunset"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.config.label
+#: default/omarchy/omarchy-menu.jsonc:update.config.label
+msgid "Config"
+msgstr "Configuració"
+
+#: default/omarchy/omarchy-menu.jsonc:setup.config.xcompose.label
+msgid "XCompose"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.agent.agy.label
+msgid "Antigravity"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.agent.claude.label
+msgid "Claude"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.agent.codex.label
+msgid "Codex"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.agent.copilot.label
+msgid "Copilot"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.agent.crush.label
+msgid "Crush"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.agent.grok.label
+msgid "Grok"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.agent.label
+msgid "Agent"
+msgstr "Agent"
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.agent.omp.label
+msgid "omp"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.agent.opencode.label
+msgid "OpenCode"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.agent.ori.label
+msgid "Ori"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.agent.pi.label
+msgid "Pi"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.agent.title
+msgid "Default Agent"
+msgstr "Agent per defecte"
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.browser.brave-origin.label
+#: default/omarchy/omarchy-menu.jsonc:install.browser.brave-origin.label
+#: default/omarchy/omarchy-menu.jsonc:remove.browser.brave-origin.label
+msgid "Brave Origin"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.browser.brave.label
+#: default/omarchy/omarchy-menu.jsonc:install.browser.brave.label
+#: default/omarchy/omarchy-menu.jsonc:remove.browser.brave.label
+msgid "Brave"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.browser.chrome.label
+#: default/omarchy/omarchy-menu.jsonc:install.browser.chrome.label
+#: default/omarchy/omarchy-menu.jsonc:remove.browser.chrome.label
+msgid "Chrome"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.browser.chromium.label
+msgid "Chromium"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.browser.edge.label
+#: default/omarchy/omarchy-menu.jsonc:install.browser.edge.label
+#: default/omarchy/omarchy-menu.jsonc:remove.browser.edge.label
+#: default/omarchy/omarchy-menu.jsonc:update.channel.edge.label
+msgid "Edge"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.browser.firefox.label
+#: default/omarchy/omarchy-menu.jsonc:install.browser.firefox.label
+#: default/omarchy/omarchy-menu.jsonc:remove.browser.firefox.label
+msgid "Firefox"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.browser.label
+#: default/omarchy/omarchy-menu.jsonc:install.browser.label
+#: default/omarchy/omarchy-menu.jsonc:remove.browser.label
+msgid "Browser"
+msgstr "Navegador"
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.browser.title
+msgid "Default Browser"
+msgstr "Navegador per defecte"
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.browser.zen.label
+#: default/omarchy/omarchy-menu.jsonc:install.browser.zen.label
+#: default/omarchy/omarchy-menu.jsonc:remove.browser.zen.label
+msgid "Zen"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.editor.cursor.label
+#: default/omarchy/omarchy-menu.jsonc:install.editor.cursor.label
+msgid "Cursor"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.editor.emacs.label
+#: default/omarchy/omarchy-menu.jsonc:install.editor.emacs.label
+msgid "Emacs"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.editor.helix.label
+#: default/omarchy/omarchy-menu.jsonc:install.editor.helix.label
+msgid "Helix"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.editor.label
+#: default/omarchy/omarchy-menu.jsonc:install.editor.label
+msgid "Editor"
+msgstr "Editor"
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.editor.sublime.label
+#: default/omarchy/omarchy-menu.jsonc:install.editor.sublime.label
+msgid "Sublime Text"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.editor.title
+msgid "Default Editor"
+msgstr "Editor per defecte"
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.editor.vim.label
+#: default/omarchy/omarchy-menu.jsonc:install.editor.vim.label
+msgid "Vim"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.editor.vscode.label
+#: default/omarchy/omarchy-menu.jsonc:install.editor.vscode.label
+msgid "VSCode"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.editor.zed.label
+#: default/omarchy/omarchy-menu.jsonc:install.editor.zed.label
+msgid "Zed"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.label
+msgid "Defaults"
+msgstr "Valors per defecte"
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.terminal.alacritty.label
+#: default/omarchy/omarchy-menu.jsonc:install.terminal.alacritty.label
+msgid "Alacritty"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.terminal.foot.label
+#: default/omarchy/omarchy-menu.jsonc:install.terminal.foot.label
+msgid "Foot"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.terminal.ghostty.label
+#: default/omarchy/omarchy-menu.jsonc:install.terminal.ghostty.label
+msgid "Ghostty"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.terminal.kitty.label
+#: default/omarchy/omarchy-menu.jsonc:install.terminal.kitty.label
+msgid "Kitty"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.terminal.label
+#: default/omarchy/omarchy-menu.jsonc:install.terminal.label
+msgid "Terminal"
+msgstr "Terminal"
+
+#: default/omarchy/omarchy-menu.jsonc:setup.default.terminal.title
+msgid "Default Terminal"
+msgstr "Terminal per defecte"
+
+#: default/omarchy/omarchy-menu.jsonc:setup.direct-boot.label
+msgid "Direct Boot"
+msgstr "Arrencada directa"
+
+#: default/omarchy/omarchy-menu.jsonc:setup.input.label
+#: shell/plugins/menu/Menu.qml:888
+msgid "Input"
+msgstr "Entrada"
+
+#: default/omarchy/omarchy-menu.jsonc:setup.label
+msgid "Setup"
+msgstr "Configura"
+
+#: default/omarchy/omarchy-menu.jsonc:setup.monitors.label
+msgid "Monitors"
+msgstr "Monitors"
+
+#: default/omarchy/omarchy-menu.jsonc:setup.network.dns.cloudflare.label
+msgid "Cloudflare"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.network.dns.custom.label
+msgid "Custom"
+msgstr "Personalitzat"
+
+#: default/omarchy/omarchy-menu.jsonc:setup.network.dns.dhcp.label
+msgid "DHCP"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.network.dns.google.label
+msgid "Google"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.network.dns.label
+msgid "DNS"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.network.label
+msgid "Network"
+msgstr "Xarxa"
+
+#: default/omarchy/omarchy-menu.jsonc:setup.plugin.add.label
+msgid "Add Plugin"
+msgstr "Afegeix un connector"
+
+#: default/omarchy/omarchy-menu.jsonc:setup.plugin.clone.label
+msgid "Clone Plugin"
+msgstr "Clona un connector"
+
+#: default/omarchy/omarchy-menu.jsonc:setup.plugin.disable.label
+msgid "Disable Plugin"
+msgstr "Desactiva un connector"
+
+#: default/omarchy/omarchy-menu.jsonc:setup.plugin.enable.label
+msgid "Enable Plugin"
+msgstr "Activa un connector"
+
+#: default/omarchy/omarchy-menu.jsonc:setup.plugin.label
+msgid "Plugins"
+msgstr "Connectors"
+
+#: default/omarchy/omarchy-menu.jsonc:setup.plugin.remove.label
+msgid "Remove Plugin"
+msgstr "Suprimeix un connector"
+
+#: default/omarchy/omarchy-menu.jsonc:setup.reset.label
+msgid "Reset Computer"
+msgstr "Restableix l'ordinador"
+
+#: default/omarchy/omarchy-menu.jsonc:setup.security.fido2.label
+#: default/omarchy/omarchy-menu.jsonc:remove.security.fido2.label
+msgid "Fido2"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.security.fingerprint.label
+#: default/omarchy/omarchy-menu.jsonc:remove.security.fingerprint.label
+msgid "Fingerprint"
+msgstr "Empremta digital"
+
+#: default/omarchy/omarchy-menu.jsonc:setup.security.label
+#: default/omarchy/omarchy-menu.jsonc:remove.security.label
+msgid "Security"
+msgstr "Seguretat"
+
+#: default/omarchy/omarchy-menu.jsonc:setup.security.passwordless-sudo.label
+msgid "Passwordless Sudo"
+msgstr "Sudo sense contrasenya"
+
+#: default/omarchy/omarchy-menu.jsonc:setup.security.sshd.label
+#: default/omarchy/omarchy-menu.jsonc:remove.security.sshd.label
+msgid "SSHD"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.security.sudoless-docker.label
+#: default/omarchy/omarchy-menu.jsonc:remove.security.sudoless-docker.label
+msgid "Sudoless Docker"
+msgstr "Docker sense sudo"
+
+#: default/omarchy/omarchy-menu.jsonc:style.about.default.label
+#: default/omarchy/omarchy-menu.jsonc:style.screensaver.default.label
+msgid "Restore Default"
+msgstr "Restaura el valor per defecte"
+
+#: default/omarchy/omarchy-menu.jsonc:style.about.image.label
+#: default/omarchy/omarchy-menu.jsonc:style.screensaver.image.label
+msgid "Set From Image"
+msgstr "Estableix des d'una imatge"
+
+#: default/omarchy/omarchy-menu.jsonc:style.about.text.label
+#: default/omarchy/omarchy-menu.jsonc:style.screensaver.text.label
+msgid "Edit Text"
+msgstr "Edita el text"
+
+#: default/omarchy/omarchy-menu.jsonc:style.background.label
+#: default/omarchy/omarchy-menu.jsonc:install.style.background.label
+msgid "Background"
+msgstr "Fons"
+
+#: default/omarchy/omarchy-menu.jsonc:style.bar.position.bottom.label
+msgid "Bottom"
+msgstr "A baix"
+
+#: default/omarchy/omarchy-menu.jsonc:style.bar.position.label
+msgid "Position"
+msgstr "Posició"
+
+#: default/omarchy/omarchy-menu.jsonc:style.bar.position.left.label
+msgid "Left"
+msgstr "Esquerra"
+
+#: default/omarchy/omarchy-menu.jsonc:style.bar.position.right.label
+msgid "Right"
+msgstr "Dreta"
+
+#: default/omarchy/omarchy-menu.jsonc:style.bar.position.top.label
+msgid "Top"
+msgstr "A dalt"
+
+#: default/omarchy/omarchy-menu.jsonc:style.bar.transparency.label
+msgid "Transparency"
+msgstr "Transparència"
+
+#: default/omarchy/omarchy-menu.jsonc:style.font.label
+#: default/omarchy/omarchy-menu.jsonc:install.style.font.label
+msgid "Font"
+msgstr "Tipus de lletra"
+
+#: default/omarchy/omarchy-menu.jsonc:style.label
+#: default/omarchy/omarchy-menu.jsonc:install.style.label
+msgid "Style"
+msgstr "Estil"
+
+#: default/omarchy/omarchy-menu.jsonc:style.theme.label
+#: default/omarchy/omarchy-menu.jsonc:install.style.theme.label
+#: default/omarchy/omarchy-menu.jsonc:remove.theme.label
+msgid "Theme"
+msgstr "Tema"
+
+#: default/omarchy/omarchy-menu.jsonc:style.unlock.label
+msgid "Unlock"
+msgstr "Desbloqueja"
+
+#: default/omarchy/omarchy-menu.jsonc:system.hibernate.label
+msgid "Hibernate"
+msgstr "Hiberna"
+
+#: default/omarchy/omarchy-menu.jsonc:system.label
+msgid "System"
+msgstr "Sistema"
+
+#: default/omarchy/omarchy-menu.jsonc:system.lock.label
+msgid "Lock"
+msgstr "Bloqueja"
+
+#: default/omarchy/omarchy-menu.jsonc:system.logout.label
+msgid "Logout"
+msgstr "Tanca la sessió"
+
+#: default/omarchy/omarchy-menu.jsonc:system.reboot.label
+msgid "Reboot"
+msgstr "Reinicia"
+
+#: default/omarchy/omarchy-menu.jsonc:system.screensaver.label
+#: default/omarchy/omarchy-menu.jsonc:trigger.toggle.screensaver.label
+#: default/omarchy/omarchy-menu.jsonc:style.screensaver.label
+msgid "Screensaver"
+msgstr "Estalvi de pantalla"
+
+#: default/omarchy/omarchy-menu.jsonc:system.shutdown.label
+msgid "Shutdown"
+msgstr "Atura"
+
+#: default/omarchy/omarchy-menu.jsonc:system.suspend.label
+msgid "Suspend"
+msgstr "Suspèn"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.capture.color.label
+msgid "Color"
+msgstr "Color"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.capture.label
+msgid "Capture"
+msgstr "Captura"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.capture.qr.label
+#: default/omarchy/omarchy-menu.jsonc:setup.network.qr.label
+msgid "QR Code"
+msgstr "Codi QR"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.capture.screenrecord.desktop-audio.label
+msgid "With desktop audio"
+msgstr "Amb àudio de l'escriptori"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.capture.screenrecord.label
+msgid "Screenrecord"
+msgstr "Grava la pantalla"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.capture.screenrecord.microphone.label
+msgid "With desktop + microphone audio"
+msgstr "Amb àudio de l'escriptori i del micròfon"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.capture.screenrecord.no-audio.label
+msgid "With no audio"
+msgstr "Sense àudio"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.capture.screenrecord.stop.label
+msgid "Stop Screenrecording"
+msgstr "Atura la gravació de pantalla"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.capture.screenrecord.webcam.label
+msgid "With desktop + microphone audio + webcam"
+msgstr "Amb àudio de l'escriptori i del micròfon, i càmera web"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.capture.screenshot.label
+msgid "Screenshot"
+msgstr "Captura de pantalla"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.capture.text.label
+msgid "Text"
+msgstr "Text"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.emoji.label
+msgid "Emoji"
+msgstr "Emoji"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.hardware.hybrid-gpu.label
+msgid "Hybrid GPU"
+msgstr "GPU híbrida"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.hardware.label
+#: default/omarchy/omarchy-menu.jsonc:update.hardware.label
+msgid "Hardware"
+msgstr "Maquinari"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.hardware.laptop-display.label
+msgid "Laptop Display"
+msgstr "Pantalla del portàtil"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.hardware.mirror-display.label
+msgid "Mirror Display"
+msgstr "Duplica la pantalla"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.hardware.touchpad-haptics.high.label
+msgid "high"
+msgstr "alta"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.hardware.touchpad-haptics.label
+msgid "Touchpad Haptics"
+msgstr "Resposta hàptica del ratolí tàctil"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.hardware.touchpad-haptics.low.label
+msgid "low"
+msgstr "baixa"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.hardware.touchpad-haptics.mid.label
+msgid "mid"
+msgstr "mitjana"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.hardware.touchpad.label
+msgid "Touchpad"
+msgstr "Ratolí tàctil"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.hardware.touchscreen.label
+msgid "Touchscreen"
+msgstr "Pantalla tàctil"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.label
+msgid "Trigger"
+msgstr "Activa"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.reminder.clear.label
+msgid "Clear all"
+msgstr "Esborra-ho tot"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.reminder.label
+msgid "Reminder"
+msgstr "Recordatori"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.reminder.set.label
+msgid "Set one"
+msgstr "Crea'n un"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.reminder.show.label
+msgid "Show all"
+msgstr "Mostra'ls tots"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.share.clipboard.label
+msgid "Clipboard"
+msgstr "Porta-retalls"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.share.file.label
+msgid "File"
+msgstr "Fitxer"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.share.folder.label
+msgid "Folder"
+msgstr "Carpeta"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.share.label
+msgid "Share"
+msgstr "Comparteix"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.share.receive.label
+msgid "Receive"
+msgstr "Rep"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.tests.disk-speedtest.label
+msgid "Disk Speed Test"
+msgstr "Prova de velocitat del disc"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.tests.label
+msgid "Speed Test"
+msgstr "Prova de velocitat"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.tests.network-speedtest.label
+msgid "Network Speed Test"
+msgstr "Prova de velocitat de la xarxa"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.toggle.battery-percentage.label
+msgid "Battery Percentage"
+msgstr "Percentatge de bateria"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.toggle.crash-capture.label
+msgid "Crash Capture"
+msgstr "Captura d'errors"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.toggle.idle-lock.label
+msgid "Stay Awake"
+msgstr "Mantén despert"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.toggle.label
+msgid "Toggle"
+msgstr "Commuta"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.toggle.nightlight.label
+msgid "Nightlight"
+msgstr "Llum nocturna"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.toggle.notifications.label
+msgid "Notifications"
+msgstr "Notificacions"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.toggle.one-window-ratio.label
+msgid "1-Window Ratio"
+msgstr "Proporció d'una finestra"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.toggle.top-bar.label
+#: default/omarchy/omarchy-menu.jsonc:style.bar.label
+msgid "Menu Bar"
+msgstr "Barra de menú"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.toggle.window-gaps.label
+msgid "Window Gaps"
+msgstr "Espai entre finestres"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.toggle.workspace-layout.label
+msgid "Workspace Layout"
+msgstr "Disposició de l'espai de treball"
+
+#: default/omarchy/omarchy-menu.jsonc:trigger.transcode.label
+msgid "Transcode"
+msgstr "Transcodifica"
+
+#: default/omarchy/omarchy-menu.jsonc:update.channel.dev.label
+msgid "Dev"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:update.channel.label
+msgid "Channel"
+msgstr "Canal"
+
+#: default/omarchy/omarchy-menu.jsonc:update.channel.rc.label
+msgid "RC"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:update.channel.stable.label
+msgid "Stable"
+msgstr "Estable"
+
+#: default/omarchy/omarchy-menu.jsonc:update.config.plymouth.label
+msgid "Plymouth"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:update.config.title
+msgid "Reset to default"
+msgstr "Restableix el valor per defecte"
+
+#: default/omarchy/omarchy-menu.jsonc:update.firmware.label
+msgid "Firmware"
+msgstr "Microprogramari"
+
+#: default/omarchy/omarchy-menu.jsonc:update.hardware.audio.label
+msgid "Audio"
+msgstr "Àudio"
+
+#: default/omarchy/omarchy-menu.jsonc:update.hardware.bluetooth.label
+msgid "Bluetooth"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:update.hardware.trackpad.label
+msgid "Trackpad"
+msgstr "Ratolí tàctil"
+
+#: default/omarchy/omarchy-menu.jsonc:update.hardware.wifi.label
+msgid "Wi-Fi"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:update.label
+msgid "Update"
+msgstr "Actualitza"
+
+#: default/omarchy/omarchy-menu.jsonc:update.password.drive.label
+msgid "Drive Encryption"
+msgstr "Xifratge del disc"
+
+#: default/omarchy/omarchy-menu.jsonc:update.password.label
+msgid "Password"
+msgstr "Contrasenya"
+
+#: default/omarchy/omarchy-menu.jsonc:update.password.user.label
+msgid "User"
+msgstr "Usuari"
+
+#: default/omarchy/omarchy-menu.jsonc:update.process.label
+msgid "Process"
+msgstr "Procés"
+
+#: default/omarchy/omarchy-menu.jsonc:update.process.shell.label
+#: default/omarchy/omarchy-menu.jsonc:update.config.shell.label
+msgid "Shell"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:update.process.title
+#: default/omarchy/omarchy-menu.jsonc:update.hardware.title
+msgid "Restart"
+msgstr "Reinicia"
+
+#: default/omarchy/omarchy-menu.jsonc:update.themes.label
+msgid "Extra Themes"
+msgstr "Temes addicionals"
+
+#: default/omarchy/omarchy-menu.jsonc:update.time.label
+msgid "Time"
+msgstr "Hora"
+
+#: default/omarchy/omarchy-menu.jsonc:update.timezone.label
+msgid "Timezone"
+msgstr "Fus horari"
+
+#: shell/plugins/menu/Menu.qml:1205
+#, qt-format
+msgid "Do you want to uninstall %1?"
+msgstr "Voleu desinstal·lar %1?"
+
+#: shell/plugins/menu/Menu.qml:1206
+msgid "Uninstall"
+msgstr "Desinstal·la"
+
+#: shell/plugins/menu/Menu.qml:1487
+#, qt-format
+msgid "No matches for “%1”"
+msgstr "No hi ha coincidències per a «%1»"
+
+#: shell/plugins/menu/Menu.qml:1487
+msgid "Nothing here yet"
+msgstr "Encara no hi ha res"
+
+#: shell/plugins/menu/Menu.qml:261 shell/plugins/menu/Menu.qml:1237
+msgctxt "menu prompt"
+msgid "Go"
+msgstr "Vés"
+
+#: shell/plugins/menu/Menu.qml:888
+msgid "Select"
+msgstr "Selecciona"

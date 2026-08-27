@@ -1,0 +1,270 @@
+#!/usr/bin/env node
+// omarchy-i18n-extract — pull translatable strings out of an Omarchy checkout
+// into one POT per translation domain.
+//
+//   omarchy-i18n-extract <omarchy-checkout> <out-dir>
+//
+// What counts as a string
+//   QML / JS   tr("…")  trc("ctx", "…")  ntr(n, "one", "many")  noop("…")
+//              on any receiver: I18n.tr, _.tr, t.tr …
+//   Bash       omarchy_t "…"   omarchy_tn <n> "one" "many"
+//   Data       default/omarchy/omarchy-menu.jsonc — label, title, description
+//
+// Which domain a string belongs to is derived from its path:
+//   shell/plugins/**       the id in the nearest manifest.json
+//   shell/**  (otherwise)  omarchy.shell
+//   bin/**, default/bash   omarchy.cli
+//   the menu definition    omarchy.menu
+// A QML file that binds a literal domain (I18n.domain("x")) is checked
+// against the path-derived one and a mismatch is reported.
+
+"use strict"
+
+const fs = require("fs")
+const path = require("path")
+const { execSync } = require("child_process")
+const po = require("./lib/po.js")
+
+const DATA_SOURCES = {
+  "default/omarchy/omarchy-menu.jsonc": { domain: "omarchy.menu", fields: ["label", "title", "description"] },
+}
+const SKIP_DIRS = new Set([".git", "node_modules", "test", "docs", "manual", "plans", "agents", "migrations", "themes", "applications", "icons", "install", "etc"])
+
+// ---------------------------------------------------------------------------
+
+function walk(dir, acc) {
+  for (const name of fs.readdirSync(dir)) {
+    const full = path.join(dir, name)
+    const st = fs.statSync(full)
+    if (st.isDirectory()) {
+      if (!SKIP_DIRS.has(name)) walk(full, acc)
+    } else acc.push(full)
+  }
+  return acc
+}
+
+function domainForFile(root, rel) {
+  if (DATA_SOURCES[rel]) return DATA_SOURCES[rel].domain
+  if (rel.startsWith("shell/plugins/")) {
+    let dir = path.dirname(path.join(root, rel))
+    const stop = path.join(root, "shell/plugins")
+    while (dir.length >= stop.length) {
+      const manifest = path.join(dir, "manifest.json")
+      if (fs.existsSync(manifest)) {
+        try { const id = JSON.parse(fs.readFileSync(manifest, "utf8")).id; if (id) return String(id) } catch (e) { /* fall through */ }
+      }
+      if (dir === stop) break
+      dir = path.dirname(dir)
+    }
+    return null
+  }
+  if (rel.startsWith("shell/")) return "omarchy.shell"
+  if (rel.startsWith("bin/") || rel.startsWith("default/bash/")) return "omarchy.cli"
+  return null
+}
+
+function isBashScript(full, rel) {
+  if (rel.startsWith("default/bash/")) return true
+  if (!rel.startsWith("bin/")) return false
+  try {
+    const head = fs.readFileSync(full, { encoding: "utf8", flag: "r" }).slice(0, 64)
+    return /^#!.*\b(ba)?sh\b/.test(head)
+  } catch (e) { return false }
+}
+
+// JS string literal → value
+const STR = `"((?:[^"\\\\]|\\\\.)*)"|'((?:[^'\\\\]|\\\\.)*)'`
+function unescapeJs(s) {
+  return s.replace(/\\(n|t|r|"|'|\\|u[0-9a-fA-F]{4})/g, (_, c) => {
+    if (c[0] === "u") return String.fromCharCode(parseInt(c.slice(1), 16))
+    return { n: "\n", t: "\t", r: "\r", '"': '"', "'": "'", "\\": "\\" }[c]
+  })
+}
+function strValue(m1, m2) { return unescapeJs(m1 !== undefined ? m1 : m2) }
+
+// Blank out full-line comments (// … and # …) so examples in headers are not
+// extracted; line numbers are preserved. Trailing comments are left alone
+// because "//" also appears inside string literals (URLs).
+function blankCommentLines(text, marker) {
+  return text.split("\n").map(l => (l.trimStart().startsWith(marker) ? "" : l)).join("\n")
+}
+
+function lineOf(text, index) {
+  let line = 1
+  for (let i = 0; i < index; i++) if (text.charCodeAt(i) === 10) line++
+  return line
+}
+
+// ---------------------------------------------------------------------------
+// Scanners return [{ msgctxt, msgid, msgid_plural, line }]
+
+function scanQmlJs(source) {
+  const text = blankCommentLines(source, "//")
+  const found = []
+  const re = new RegExp(
+    `\\b(trc|ntr|tr|noop)\\s*\\(\\s*` +
+    `(?:(${STR})\\s*,\\s*(${STR})` +       // trc("ctx", "src")  — groups 2..6
+    `|([^,()]+?)\\s*,\\s*(${STR})\\s*,\\s*(${STR})` +  // ntr(n, "one", "many")
+    `|(${STR}))`,                           // tr("src") / noop("src")
+    "g")
+  let m
+  while ((m = re.exec(text))) {
+    const fn = m[1]
+    const line = lineOf(text, m.index)
+    if (fn === "trc" && m[2] !== undefined) {
+      found.push({ msgctxt: strValue(m[3], m[4]), msgid: strValue(m[6], m[7]), msgid_plural: null, line })
+    } else if (fn === "ntr" && m[8] !== undefined) {
+      found.push({ msgctxt: null, msgid: strValue(m[10], m[11]), msgid_plural: strValue(m[13], m[14]), line })
+    } else if ((fn === "tr" || fn === "noop") && m[15] !== undefined) {
+      found.push({ msgctxt: null, msgid: strValue(m[16], m[17]), msgid_plural: null, line })
+    }
+  }
+  return found
+}
+
+function scanBash(source) {
+  const text = blankCommentLines(source, "#")
+  const found = []
+  const q = `"((?:[^"\\\\]|\\\\.)*)"|'([^']*)'`
+  const re = new RegExp(`\\bomarchy_t(n)?\\s+(?:(\\S+)\\s+)?(?:${q})(?:\\s+(?:${q}))?`, "g")
+  let m
+  while ((m = re.exec(text))) {
+    const plural = m[1] === "n"
+    const line = lineOf(text, m.index)
+    if (plural) {
+      if (m[5] === undefined && m[6] === undefined) continue
+      found.push({ msgctxt: null, msgid: bashStr(m[3], m[4]), msgid_plural: bashStr(m[5], m[6]), line })
+    } else {
+      // omarchy_t "src" [args] — the count slot (group 2) must be absent
+      if (m[2] !== undefined) { re.lastIndex = m.index + 9; continue }
+      found.push({ msgctxt: null, msgid: bashStr(m[3], m[4]), msgid_plural: null, line })
+    }
+  }
+  return found
+}
+function bashStr(dq, sq) { return dq !== undefined ? dq.replace(/\\(["\\$`])/g, "$1") : sq }
+
+// JSONC → JSON: strip // and /* */ comments outside strings, and trailing commas.
+function stripJsonc(text) {
+  let out = "", i = 0, inStr = false
+  while (i < text.length) {
+    const c = text[i], n = text[i + 1]
+    if (inStr) { out += c; if (c === "\\") { out += n; i += 2; continue } if (c === '"') inStr = false; i++; continue }
+    if (c === '"') { inStr = true; out += c; i++; continue }
+    if (c === "/" && n === "/") { while (i < text.length && text[i] !== "\n") i++; continue }
+    if (c === "/" && n === "*") { i += 2; while (i < text.length && !(text[i] === "*" && text[i + 1] === "/")) i++; i += 2; continue }
+    out += c; i++
+  }
+  return out.replace(/,(\s*[}\]])/g, "$1")
+}
+
+function scanMenuData(text, fields) {
+  const found = []
+  const data = JSON.parse(stripJsonc(text))
+  for (const id of Object.keys(data)) {
+    const entry = data[id]
+    if (!entry || typeof entry !== "object") continue
+    for (const f of fields) {
+      const v = entry[f]
+      if (typeof v === "string" && v.trim()) found.push({ msgctxt: null, msgid: v, msgid_plural: null, line: id + "." + f })
+    }
+  }
+  return found
+}
+
+function declaredDomain(text) {
+  const m = blankCommentLines(text, "//").match(/I18n\.domain\(\s*"([^"]+)"\s*\)/)
+  return m ? m[1] : null
+}
+
+// ---------------------------------------------------------------------------
+
+function main(argv) {
+  const [root, outDir] = argv
+  if (!root || !outDir) { console.error("usage: omarchy-i18n-extract <omarchy-checkout> <out-dir>"); process.exit(2) }
+
+  let sourceRev = "unknown"
+  try { sourceRev = execSync("git rev-parse --abbrev-ref HEAD", { cwd: root, stdio: ["ignore", "pipe", "ignore"] }).toString().trim()
+        + "@" + execSync("git rev-parse --short HEAD", { cwd: root, stdio: ["ignore", "pipe", "ignore"] }).toString().trim() } catch (e) { /* not a git checkout */ }
+
+  const domains = {}   // domain -> Map(key -> entry)
+  const warnings = []
+  let files = 0
+
+  function add(domain, item, rel) {
+    const map = domains[domain] || (domains[domain] = new Map())
+    const k = (item.msgctxt ? item.msgctxt + "\u0004" : "") + item.msgid
+    let e = map.get(k)
+    if (!e) {
+      e = po.newEntry()
+      e.msgctxt = item.msgctxt
+      e.msgid = item.msgid
+      e.msgid_plural = item.msgid_plural
+      e.msgstr = item.msgid_plural ? ["", ""] : [""]
+      if (/%[1-9]/.test(item.msgid) || (item.msgid_plural && /%[1-9]/.test(item.msgid_plural))) e.flags.push("qt-format")
+      map.set(k, e)
+    } else if (item.msgid_plural && !e.msgid_plural) {
+      e.msgid_plural = item.msgid_plural; e.msgstr = ["", ""]
+    }
+    e.references.push(rel + ":" + item.line)
+  }
+
+  for (const full of walk(root, [])) {
+    const rel = path.relative(root, full).split(path.sep).join("/")
+    const domain = domainForFile(root, rel)
+    if (!domain) continue
+    let text
+    try { text = fs.readFileSync(full, "utf8") } catch (e) { continue }
+
+    let items = []
+    if (DATA_SOURCES[rel]) {
+      items = scanMenuData(text, DATA_SOURCES[rel].fields)
+    } else if (/\.(qml|js)$/.test(rel)) {
+      items = scanQmlJs(text)
+      if (rel.endsWith(".qml")) {
+        const declared = declaredDomain(text)
+        if (declared && declared !== domain) warnings.push(`${rel}: binds I18n.domain("${declared}") but lives in ${domain}`)
+      }
+    } else if (isBashScript(full, rel)) {
+      items = scanBash(text)
+    } else continue
+
+    files++
+    for (const item of items) add(domain, item, rel)
+  }
+
+  fs.mkdirSync(outDir, { recursive: true })
+  const summary = []
+  for (const domain of Object.keys(domains).sort()) {
+    const entries = Array.from(domains[domain].values())
+    entries.sort((a, b) => a.references[0] < b.references[0] ? -1 : a.references[0] > b.references[0] ? 1 : 0)
+    const catalog = {
+      headerFuzzy: true,
+      header: {
+        "Project-Id-Version": "omarchy " + domain,
+        "Report-Msgid-Bugs-To": "",
+        "POT-Creation-Date": new Date().toISOString().replace(/\.\d{3}Z$/, "+0000").replace("T", " "),
+        "PO-Revision-Date": "YEAR-MO-DA HO:MI+ZONE",
+        "Last-Translator": "FULL NAME <EMAIL@ADDRESS>",
+        "Language-Team": "LANGUAGE <LL@li.org>",
+        "Language": "",
+        "MIME-Version": "1.0",
+        "Content-Type": "text/plain; charset=UTF-8",
+        "Content-Transfer-Encoding": "8bit",
+        "Plural-Forms": "nplurals=2; plural=(n != 1);",
+        "X-Omarchy-Domain": domain,
+        "X-Omarchy-Source": sourceRev,
+      },
+      entries,
+    }
+    fs.writeFileSync(path.join(outDir, domain + ".pot"), po.serialize(catalog))
+    summary.push({ domain, strings: entries.length })
+  }
+
+  for (const w of warnings) console.error("warning: " + w)
+  console.log(`scanned ${files} files from ${sourceRev}`)
+  for (const s of summary) console.log(`  ${s.domain.padEnd(28)} ${String(s.strings).padStart(4)} strings`)
+}
+
+if (require.main === module) main(process.argv.slice(2))
+module.exports = { scanQmlJs, scanBash, scanMenuData, stripJsonc, domainForFile, declaredDomain }

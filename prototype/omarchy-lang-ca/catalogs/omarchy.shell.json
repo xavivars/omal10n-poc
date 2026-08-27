@@ -1,0 +1,9 @@
+{
+  "": {
+    "language": "ca",
+    "plural-forms": "nplurals=2; plural=(n != 1);",
+    "source": "l10n-prototype@e542adc5"
+  },
+  "Cancel": "Cancel·la",
+  "Confirm": "Confirma"
+}

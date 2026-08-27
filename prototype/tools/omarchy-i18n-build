@@ -1,0 +1,98 @@
+#!/usr/bin/env node
+// omarchy-i18n-build — compile one locale's PO files into the JSON catalogs a
+// language pack ships.
+//
+//   omarchy-i18n-build <po-dir> <out-dir> [--locale ca]
+//
+// <po-dir> holds one <domain>.po per translation domain. Each becomes
+// <out-dir>/<domain>.json in the po2json/Jed shape the shell's I18n
+// singleton reads:
+//
+//   { "": { "language": "ca", "plural-forms": "...", "source": "quattro@1ccdc20" },
+//     "Connect": "Connecta",
+//     "verb\u0004Open": "Obre",
+//     "%1 city": ["%1 ciutat", "%1 ciutats"] }
+//
+// Untranslated and fuzzy entries are left out, so the runtime falls back to
+// English for them. Reports coverage per domain, and warns when two domains
+// translate the same source string differently — the one case an unbound
+// caller resolves wrong.
+
+"use strict"
+
+const fs = require("fs")
+const path = require("path")
+const po = require("./lib/po.js")
+
+function compile(catalog, locale) {
+  const out = {}
+  const header = {}
+  header.language = locale || catalog.header.Language || ""
+  if (catalog.header["Plural-Forms"]) header["plural-forms"] = catalog.header["Plural-Forms"]
+  if (catalog.header["X-Omarchy-Source"]) header.source = catalog.header["X-Omarchy-Source"]
+  out[""] = header
+
+  let total = 0, translated = 0
+  for (const e of catalog.entries) {
+    if (e.obsolete) continue
+    total++
+    if (e.flags.includes("fuzzy")) continue
+    const k = po.key(e)
+    if (e.msgid_plural !== null && e.msgid_plural !== undefined) {
+      const forms = e.msgstr.map(s => s || "")
+      if (forms.every(s => s === "")) continue
+      out[k] = forms
+    } else {
+      if (!e.msgstr[0]) continue
+      out[k] = e.msgstr[0]
+    }
+    translated++
+  }
+  return { json: out, total, translated }
+}
+
+function stableStringify(obj) {
+  const keys = Object.keys(obj).sort((a, b) => a === "" ? -1 : b === "" ? 1 : a < b ? -1 : a > b ? 1 : 0)
+  const ordered = {}
+  for (const k of keys) ordered[k] = obj[k]
+  return JSON.stringify(ordered, null, 2) + "\n"
+}
+
+function main(argv) {
+  const args = argv.filter(a => !a.startsWith("--"))
+  const localeArg = argv.indexOf("--locale")
+  const locale = localeArg !== -1 ? argv[localeArg + 1] : ""
+  const [poDir, outDir] = args
+  if (!poDir || !outDir) { console.error("usage: omarchy-i18n-build <po-dir> <out-dir> [--locale xx]"); process.exit(2) }
+
+  fs.mkdirSync(outDir, { recursive: true })
+  const seen = {}   // key -> { value, domain }
+  const rows = []
+  let collisions = 0
+
+  for (const file of fs.readdirSync(poDir).filter(f => f.endsWith(".po")).sort()) {
+    const domain = file.slice(0, -3)
+    const catalog = po.parse(fs.readFileSync(path.join(poDir, file), "utf8"))
+    const { json, total, translated } = compile(catalog, locale)
+    fs.writeFileSync(path.join(outDir, domain + ".json"), stableStringify(json))
+    rows.push({ domain, total, translated })
+
+    for (const k of Object.keys(json)) {
+      if (k === "") continue
+      const v = JSON.stringify(json[k])
+      if (seen[k] && seen[k].value !== v) {
+        collisions++
+        console.error(`warning: "${k}" is translated differently in ${seen[k].domain} and ${domain}; an unbound caller will get whichever registered last`)
+      } else if (!seen[k]) seen[k] = { value: v, domain }
+    }
+  }
+
+  for (const r of rows) {
+    const pct = r.total ? Math.round(100 * r.translated / r.total) : 100
+    console.log(`  ${r.domain.padEnd(28)} ${String(r.translated).padStart(4)}/${String(r.total).padEnd(4)} ${String(pct).padStart(3)}%`)
+  }
+  if (collisions) console.log(`  ${collisions} cross-domain collision(s) — see warnings`)
+}
+
+if (require.main === module) main(process.argv.slice(2))
+module.exports = { compile }

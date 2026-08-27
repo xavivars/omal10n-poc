@@ -1,0 +1,134 @@
+From 0d52c5f58f9251e6457aa57f5ae8896a843c782e Mon Sep 17 00:00:00 2001
+From: Xavi Ivars <xavi.ivars@gmail.com>
+Date: Thu, 27 Aug 2026 02:04:45 +0200
+Subject: [PATCH 2/3] Localize omarchy.menu and the confirm dialog
+
+Menu entries are data, so they are translated as the tree is assembled;
+the six hardcoded strings go through the bound translator. The plugin
+binds its manifest id as its domain, so a clone resolves its own catalog
+first. ConfirmDialog's default buttons resolve in omarchy.shell.
+---
+ shell/Ui/ConfirmDialog.qml  |  4 ++--
+ shell/plugins/menu/Menu.qml | 44 ++++++++++++++++++++++++++++++++-----
+ 2 files changed, 40 insertions(+), 8 deletions(-)
+
+diff --git a/shell/Ui/ConfirmDialog.qml b/shell/Ui/ConfirmDialog.qml
+index ed4f8c98..656c2159 100644
+--- a/shell/Ui/ConfirmDialog.qml
++++ b/shell/Ui/ConfirmDialog.qml
+@@ -6,8 +6,8 @@ Item {
+ 
+   property bool opened: false
+   property string message: ""
+-  property string cancelText: "Cancel"
+-  property string confirmText: "Confirm"
++  property string cancelText: I18n.tr("Cancel")
++  property string confirmText: I18n.tr("Confirm")
+   property int selectedIndex: 1
+   property color background: Color.background
+   property color foreground: Color.foreground
+diff --git a/shell/plugins/menu/Menu.qml b/shell/plugins/menu/Menu.qml
+index eeaf2e25..066aff2a 100644
+--- a/shell/plugins/menu/Menu.qml
++++ b/shell/plugins/menu/Menu.qml
+@@ -14,6 +14,12 @@ Item {
+   property var shell: null
+   property var manifest: null
+ 
++  // Translation domain: this plugin's id, so a copy made with
++  // `omarchy plugin clone` resolves its own catalog first and falls
++  // through to omarchy.menu's for everything it did not change.
++  readonly property var _: I18n.domain(root.manifest && root.manifest.id ? root.manifest.id : "omarchy.menu")
++  on_Changed: if (root.rowsLoaded) root.rebuildItemsFromSources()
++
+   // Plugin lifecycle hooks. The host calls open(payloadJson) after
+   // `omarchy-shell shell summon omarchy.menu ...` and close() when hidden.
+   property string pendingInitialMenu: "root"
+@@ -243,12 +249,30 @@ Item {
+   // Merge defaults + user extension. Later entries override earlier ones
+   // on a per-key basis (so the user can tweak label/icon/action without
+   // re-declaring the whole row).
++  // Menu entries are data (omarchy-menu.jsonc), so their text is translated
++  // here as the tree is assembled rather than at each call site. The source
++  // strings are extracted from the jsonc file into the omarchy.menu domain.
++  function localizeItems(items) {
++    var localized = ({})
++    for (var id in items) {
++      var entry = Object.assign({}, items[id])
++      // The root prompt "Go" collides with the Go language under Install;
++      // a context keeps the two apart in the catalog.
++      if (id === "root" && entry.label === "Go") entry.label = _.trc("menu prompt", "Go")
++      else if (entry.label) entry.label = _.tr(entry.label)
++      if (entry.title) entry.title = _.tr(entry.title)
++      if (entry.description) entry.description = _.tr(entry.description)
++      localized[id] = entry
++    }
++    return localized
++  }
++
+   function rebuildItemsFromSources() {
+     var mergedMenu = MenuModel.mergeMenuSources(root.defaultMenuItems, root.userMenuItems)
+     root.providerRevision += 1
+     root.providersLoaded = ({})
+     root.providerQueue = []
+-    root.items = mergedMenu.items
++    root.items = root.localizeItems(mergedMenu.items)
+     root.itemOrder = mergedMenu.itemOrder
+     root.rowsLoaded = true
+     root.evaluateGuards()
+@@ -861,7 +885,7 @@ Item {
+   function openDmenu(payload) {
+     requestSerial += 1
+     mode = payload.mode === "input" ? "input" : "select"
+-    dmenuPrompt = String(payload.prompt || (mode === "input" ? "Input" : "Select"))
++    dmenuPrompt = String(payload.prompt || (mode === "input" ? _.tr("Input") : _.tr("Select")))
+     dmenuOptions = Array.isArray(payload.options) ? payload.options : []
+     selectionFile = String(payload.selectionFile || "")
+     doneFile = String(payload.doneFile || "")
+@@ -962,6 +986,14 @@ Item {
+   // The JSONC sources are watched so live edits to the default file (or the
+   // user extension at ~/.config/omarchy/extensions/omarchy-menu.jsonc) take
+   // effect without restarting the shell.
++  // Catalogs arrive after the registry scan, so rebuild the (already
++  // assembled) entries when they do. Bindings that call _.tr() directly
++  // repaint on their own.
++  Connections {
++    target: I18n
++    function onRevisionChanged() { if (root.rowsLoaded) root.rebuildItemsFromSources() }
++  }
++
+   FileView {
+     id: defaultMenuFile
+     path: root.defaultMenuPath
+@@ -1170,8 +1202,8 @@ Item {
+           anchors.fill: parent
+           opened: root.deleteConfirmOpen
+           z: 10
+-          message: "Do you want to uninstall " + ((root.deleteTarget && root.deleteTarget.label) || "") + "?"
+-          confirmText: "Uninstall"
++          message: _.tr("Do you want to uninstall %1?", [(root.deleteTarget && root.deleteTarget.label) || ""])
++          confirmText: _.tr("Uninstall")
+           background: root.background
+           foreground: root.foreground
+           scrim: root.scrim
+@@ -1202,7 +1234,7 @@ Item {
+             anchors.left: parent.left
+             anchors.right: parent.right
+             anchors.verticalCenter: parent.verticalCenter
+-            text: root.filterText || (root.dmenuActive ? (root.dmenuPrompt + "…") : ((root.item(root.activeMenu) ? (root.item(root.activeMenu).title || root.item(root.activeMenu).label) : "Go") + "…"))
++            text: root.filterText || (root.dmenuActive ? (root.dmenuPrompt + "…") : ((root.item(root.activeMenu) ? (root.item(root.activeMenu).title || root.item(root.activeMenu).label) : _.trc("menu prompt", "Go")) + "…"))
+             color: root.foreground
+             opacity: root.filterText ? 1 : 0.58
+             font.family: root.fontFamily
+@@ -1452,7 +1484,7 @@ Item {
+             }
+ 
+             Text {
+-              text: root.filterText ? "No matches for “" + root.filterText + "”" : "Nothing here yet"
++              text: root.filterText ? _.tr("No matches for “%1”", [root.filterText]) : _.tr("Nothing here yet")
+               color: root.foreground
+               opacity: 0.7
+               font.family: root.fontFamily
+-- 
+2.49.0
+
