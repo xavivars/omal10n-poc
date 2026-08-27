@@ -29,6 +29,9 @@ prototype/
 │   ├── manifest.json         id lang.ca, kind service
 │   ├── Service.qml           reads the registry, registers matching catalogs
 │   └── catalogs/             built from i18n/po/ca by omarchy-i18n-build
+├── screenshots/            what it looks like on a real session
+│   ├── menu-ca.png           the menu, and the «Vés…» root prompt
+│   └── clock-ca.png          the bar clock, which is issue #6360
 └── test/                   npm test — model, tools, pack loader, Bash helper
 ```
 
@@ -132,6 +135,7 @@ That gap is what patches 0004 and 0005 close, and they are deliberately separate
   means the cache loaded too late.
 
 Confirmed rendering on a real session: `dijous 2:50 a. m.`
+(`screenshots/clock-ca.png`; the menu is `screenshots/menu-ca.png`)
 
 **A limit worth stating upstream before a maintainer finds it.** Only the *default* is
 translated — a format the user pinned in `shell.json` is their explicit choice and
