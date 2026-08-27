@@ -64,8 +64,9 @@ Item {
   }
 
   readonly property string loaderScript: [
+    // The catalog dir arrives as $0, which is not part of "$@" — the domains
+    // are $@ in full, so there is nothing to shift off.
     'cd "$0" || exit 0',
-    'shift',
     'printf "{"',
     'sep=""',
     'for d in "$@"; do',

@@ -235,6 +235,15 @@ function createRegistry() {
   var nextOrder = 0
   var state = { revision: 0, merged: {}, global: {}, parents: {}, plurals: {} }
 
+  // The startup cache is registered as an ordinary owner at the lowest
+  // precedence so it can answer lookups for the frames before the real packs
+  // register. It is only ever a stand-in: once a live pack has registered,
+  // the cache copy is dropped and no longer reloadable, so disabling that
+  // pack actually reverts the interface instead of falling back to a stale
+  // duplicate of the strings it just removed.
+  var CACHE_OWNER = "cache"
+  var liveOwnerSeen = false
+
   // Fold a list of owners into { merged, parents, plurals, global }.
   function computeState(list) {
     // Lower precedence number wins. Among equals, the later registration
@@ -370,6 +379,10 @@ function createRegistry() {
       precedence: typeof opts.precedence === "number" ? opts.precedence : 0,
       order: nextOrder++
     }
+    if (ownerId !== CACHE_OWNER) {
+      liveOwnerSeen = true
+      delete owners[CACHE_OWNER]
+    }
     rebuild()
     return existing ? "replaced" : "added"
   }
@@ -381,13 +394,10 @@ function createRegistry() {
     return true
   }
 
-  // Serializable view of the merged state, for the startup cache. Loading it
-  // back registers it as one owner at the lowest precedence, so live packs
-  // override it as soon as they register. The snapshot excludes that owner:
-  // otherwise disabling every pack would write the old cache back out and
-  // the translations would return at the next login.
-  var CACHE_OWNER = "cache"
-
+  // Serializable view of the merged state, for the startup cache. The
+  // snapshot excludes the cache owner: otherwise disabling every pack would
+  // write the old cache back out and the translations would return at the
+  // next login.
   function snapshot(options) {
     var exclude = options && options.exclude !== undefined ? options.exclude : CACHE_OWNER
     var view = computeState(ownerList(exclude))
@@ -400,6 +410,10 @@ function createRegistry() {
 
   function loadSnapshot(snap, ownerId) {
     if (!snap || typeof snap !== "object" || snap.version !== 1) return false
+    // Writing the cache re-triggers the FileView that loads it. Without this
+    // a pack's own registration would come straight back in as a cache owner
+    // that outlives it.
+    if (liveOwnerSeen && (ownerId || CACHE_OWNER) === CACHE_OWNER) return false
     setCatalogs(ownerId || CACHE_OWNER, snap.catalogs, { links: snap.links, precedence: 1000 })
     return true
   }

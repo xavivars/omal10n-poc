@@ -1,0 +1,29 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: omarchy omarchy.clock\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-27 00:48:58+0000\n"
+"PO-Revision-Date: 2026-08-27 00:48:58+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: ca\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Omarchy-Domain: omarchy.clock\n"
+"X-Omarchy-Source: l10n-prototype@1b241230\n"
+
+#: shell/plugins/panels/clock/BarWidget.qml:25
+msgid ""
+"HH\n"
+"—\n"
+"mm"
+msgstr ""
+
+#. Default bar clock format. Qt date/time specifiers, not prose: dddd = long
+#. weekday, h = 12-hour, HH = 24-hour, ap = am/pm marker. Reorder or switch to
+#. 12-hour only where the locale actually does; do not translate the letters.
+#: shell/plugins/panels/clock/BarWidget.qml:26
+msgid "dddd HH:mm"
+msgstr "dddd h:mm ap"

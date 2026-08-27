@@ -1,0 +1,73 @@
+From 719d05dbbdb7f8d910eea0baaebf23bb74f60337 Mon Sep 17 00:00:00 2001
+From: Xavi Ivars <xavi.ivars@gmail.com>
+Date: Thu, 27 Aug 2026 02:51:07 +0200
+Subject: [PATCH 4/6] Take clock day and month names from the interface locale
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The clock rendered weekday and month names in English on every system,
+which is issue #6360: a session running under es_MX or ca_ES got a bar
+reading "Thursday" and a calendar headed with English short days.
+
+Two separate causes. Panel.qml pinned Qt.locale("en_US") on purpose, and
+said so: "The interface is English throughout, so day names are not taken
+from the system locale." That reasoning was sound while the shell had no
+way to be anything but English. The I18n primitive removes the premise, so
+the pin now follows the interface language instead, and the comment is
+updated to match. Where the week starts is untouched — that is a regional
+convention rather than a translation, and it stays overridable.
+
+BarWidget.qml went through Qt.formatDateTime(), which resolves dddd and
+MMMM against the C locale no matter what the session locale is. The label
+now formats through the interface locale explicitly.
+
+Neither path reads a catalog: I18n.language comes from the environment, so
+locale-correct dates work with no language pack installed at all. Falls
+back to en_US when no locale is set, which is the previous behaviour.
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+---
+ shell/plugins/panels/clock/BarWidget.qml | 5 ++++-
+ shell/plugins/panels/clock/Panel.qml     | 9 +++++----
+ 2 files changed, 9 insertions(+), 5 deletions(-)
+
+diff --git a/shell/plugins/panels/clock/BarWidget.qml b/shell/plugins/panels/clock/BarWidget.qml
+index 61cf0bf5..da88b4f6 100644
+--- a/shell/plugins/panels/clock/BarWidget.qml
++++ b/shell/plugins/panels/clock/BarWidget.qml
+@@ -57,7 +57,10 @@ BarWidget {
+   }
+ 
+   function formatted(date) {
+-    return Qt.formatDateTime(date, activeFormat.replace(/ww/g, Model.isoWeekLiteral(date.getFullYear(), date.getMonth(), date.getDate())))
++    // Qt.formatDateTime() renders dddd/MMMM from the C locale regardless of the
++    // session's, so the label goes through the interface locale explicitly.
++    var format = activeFormat.replace(/ww/g, Model.isoWeekLiteral(date.getFullYear(), date.getMonth(), date.getDate()))
++    return date.toLocaleString(Qt.locale(I18n.language || "en_US"), format)
+   }
+ 
+   // ---- Calendar popup. Shape contract for shell.summon/hide/toggle
+diff --git a/shell/plugins/panels/clock/Panel.qml b/shell/plugins/panels/clock/Panel.qml
+index f0dff3ae..5a4ef43b 100644
+--- a/shell/plugins/panels/clock/Panel.qml
++++ b/shell/plugins/panels/clock/Panel.qml
+@@ -64,10 +64,11 @@ Panel {
+   // convention. Clicking the grid's "W" heading writes the choice back to
+   // shell.json.
+   readonly property int weekStart: Model.normalizedWeekStart(setting("weekStartDay", null), Qt.locale().firstDayOfWeek)
+-  // The interface is English throughout, so day names are not taken from the
+-  // system locale. Where the week starts still is: that is a regional
+-  // convention rather than a translation, and it stays overridable above.
+-  readonly property var labelLocale: Qt.locale("en_US")
++  // Day names follow the interface language, which the I18n primitive picks:
++  // a Catalan interface gets Catalan day names, and an untranslated one stays
++  // English. Where the week starts is a separate question — a regional
++  // convention rather than a translation — and it stays overridable above.
++  readonly property var labelLocale: Qt.locale(I18n.language || "en_US")
+   readonly property string nextWeekStartLabel: labelLocale.dayName(Model.toggledWeekStart(weekStart), Locale.LongFormat)
+   readonly property var weekdays: Model.weekdayOrder(weekStart)
+   readonly property var weeks: Model.monthGrid(viewYear, viewMonth, weekStart, todayKey)
+-- 
+2.55.0
+

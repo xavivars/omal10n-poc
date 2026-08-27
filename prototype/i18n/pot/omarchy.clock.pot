@@ -1,7 +1,7 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: omarchy omarchy.shell\n"
+"Project-Id-Version: omarchy omarchy.clock\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-27 00:48:58+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
@@ -12,13 +12,16 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Omarchy-Domain: omarchy.shell\n"
+"X-Omarchy-Domain: omarchy.clock\n"
 "X-Omarchy-Source: l10n-prototype@1b241230\n"
 
-#: shell/Ui/ConfirmDialog.qml:10
-msgid "Confirm"
+#: shell/plugins/panels/clock/BarWidget.qml:25
+msgid ""
+"HH\n"
+"—\n"
+"mm"
 msgstr ""
 
-#: shell/Ui/ConfirmDialog.qml:9
-msgid "Cancel"
+#: shell/plugins/panels/clock/BarWidget.qml:26
+msgid "dddd HH:mm"
 msgstr ""

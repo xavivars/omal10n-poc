@@ -338,8 +338,10 @@ test("snapshot: excludes the cache owner, so a disabled pack does not come back"
   const written = login2.snapshot()
   assert.deepEqual(written.catalogs, {})
   assert.deepEqual(written.links, {})
-  // and the cache is still serving this session until restart, by design
-  assert.equal(login2.translate("Refresh", { domain: "omarchy.menu" }), "Actualitza")
+  // and the session reverts immediately: the pack that registered displaced the
+  // cache owner, so clearing it leaves nothing behind. Disabling a plugin has
+  // to have a visible effect, or it reads as broken.
+  assert.equal(login2.translate("Refresh", { domain: "omarchy.menu" }), "Refresh")
   const login3 = M.createRegistry()
   login3.loadSnapshot(written)
   assert.equal(login3.translate("Refresh", { domain: "omarchy.menu" }), "Refresh")
@@ -350,4 +352,39 @@ test("snapshot: rejects unknown versions", () => {
   assert.equal(reg.loadSnapshot({ version: 2 }), false)
   assert.equal(reg.loadSnapshot(null), false)
   assert.deepEqual(reg.owners(), [])
+})
+
+// ---------------------------------------------------------------------------
+// The startup cache is a stand-in, not a second copy of the catalogs.
+
+test("disabling the last pack reverts to source, cache owner and all", () => {
+  const r = M.createRegistry()
+  r.loadSnapshot({ version: 1, catalogs: { "omarchy.menu": { Apps: "Aplicacions" } }, links: {} })
+  assert.equal(r.translate("Apps", { domain: "omarchy.menu" }), "Aplicacions")
+
+  r.setCatalogs("lang.ca", { "omarchy.menu": { Apps: "Aplicacions" } }, { precedence: 0 })
+  assert.equal(r.translate("Apps", { domain: "omarchy.menu" }), "Aplicacions")
+
+  // The cache exists to cover the frames before the pack registers. Once the
+  // pack has, the cache copy must not outlive it: otherwise disabling the
+  // pack leaves the same strings still answering, and the interface stays
+  // translated until the next restart.
+  assert.equal(r.clearOwner("lang.ca"), true)
+  assert.equal(r.translate("Apps", { domain: "omarchy.menu" }), "Apps")
+})
+
+test("writing the cache cannot re-seed it over live packs", () => {
+  const r = M.createRegistry()
+  r.setCatalogs("lang.ca", { "omarchy.menu": { Apps: "Aplicacions" } }, { precedence: 0 })
+  // _writeCache() calls setText(), which re-triggers the FileView that loaded
+  // it; the reload must not register the pack's own strings as a cache owner.
+  assert.equal(r.loadSnapshot(r.snapshot()), false)
+  assert.equal(r.clearOwner("lang.ca"), true)
+  assert.equal(r.translate("Apps", { domain: "omarchy.menu" }), "Apps")
+})
+
+test("the cache still answers before any pack registers", () => {
+  const r = M.createRegistry()
+  assert.equal(r.loadSnapshot({ version: 1, catalogs: { "omarchy.menu": { Apps: "Aplicacions" } }, links: {} }), true)
+  assert.equal(r.translate("Apps", { domain: "omarchy.menu" }), "Aplicacions")
 })

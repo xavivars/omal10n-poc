@@ -1,0 +1,52 @@
+From 09f0d3b9e732b9fd4adfa7bf652ccec3375775b7 Mon Sep 17 00:00:00 2001
+From: Xavi Ivars <xavi.ivars@gmail.com>
+Date: Thu, 27 Aug 2026 02:51:19 +0200
+Subject: [PATCH 5/6] Make the default clock format translatable
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Field order and 12- versus 24-hour are locale conventions, not universals,
+so the default bar clock format is now looked up in the omarchy.clock
+domain. A Catalan catalog can ship "dddd h:mm ap" where the source says
+"dddd HH:mm".
+
+Only the default is translated. A format the user has pinned in shell.json
+is their explicit choice and passes through untouched — which also means
+this only reaches installs that have not already materialized a format
+into config, since the clock entry is written out with one.
+
+The translated string is the first catalog-backed text the shell renders
+without user interaction, so it is also what makes the primitive's
+synchronous cache load observable: with a pack installed, a 24-hour clock
+on the first frame that flips to 12-hour means the cache loaded too late.
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+---
+ shell/plugins/panels/clock/BarWidget.qml | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/shell/plugins/panels/clock/BarWidget.qml b/shell/plugins/panels/clock/BarWidget.qml
+index da88b4f6..af7a84a7 100644
+--- a/shell/plugins/panels/clock/BarWidget.qml
++++ b/shell/plugins/panels/clock/BarWidget.qml
+@@ -16,9 +16,14 @@ BarWidget {
+ 
+   property date displayDate: clock.date
+ 
++  readonly property var _: I18n.domain(root.moduleName || "omarchy.clock")
++
++  // The *default* format is translatable: field order and 12- vs 24-hour are
++  // locale conventions. A format the user has pinned in shell.json is their
++  // explicit choice and is passed through untouched.
+   readonly property string configuredFormat: vertical
+-    ? setting("verticalFormat", "HH\n—\nmm")
+-    : setting("format", "dddd HH:mm")
++    ? setting("verticalFormat", _.tr("HH\n—\nmm"))
++    : setting("format", _.tr("dddd HH:mm"))
+   readonly property string configuredAltFormat: vertical
+     ? setting("verticalFormatAlt", "dd\nMMM\n'W'ww\n''yy")
+     : setting("formatAlt", "d MMMM 'W'ww yyyy")
+-- 
+2.55.0
+

@@ -1,0 +1,98 @@
+From 0761574f76b4074dc5e5b3438dd5733a53eda897 Mon Sep 17 00:00:00 2001
+From: Xavi Ivars <xavi.ivars@gmail.com>
+Date: Thu, 27 Aug 2026 03:07:56 +0200
+Subject: [PATCH 6/6] Drop the startup cache once a live pack registers
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Disabling a language pack left the interface translated until the next
+shell restart. The pack's own catalogs were removed correctly and the
+cache file on disk was rewritten empty — the Bash helper reverted to
+English immediately — but the shell kept rendering the old language.
+
+The startup cache is registered as an ordinary owner at the lowest
+precedence so it can answer lookups before the packs load. Nothing dropped
+it once they had. So after clearOwner() removed the pack, the cache owner
+was still holding an identical copy of the same strings and went on
+answering, and only a restart cleared it.
+
+It now goes as soon as any live owner registers, which is the moment its
+job ends, and loadSnapshot() refuses to seed it back afterwards: writing
+the cache re-triggers the FileView that loads it, which would otherwise
+reintroduce the pack's own strings as an owner that outlives the pack.
+
+This reverses a decision the previous tests recorded as intentional
+("still serving this session until restart, by design"). It contradicted
+the prototype's own acceptance check, which expects disabling a pack to
+revert the interface, and in practice the silent no-op reads as a broken
+plugin rather than a deliberate one.
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+---
+ shell/Commons/I18nModel.js | 28 +++++++++++++++++++++-------
+ 1 file changed, 21 insertions(+), 7 deletions(-)
+
+diff --git a/shell/Commons/I18nModel.js b/shell/Commons/I18nModel.js
+index 5e761873..98f020c8 100644
+--- a/shell/Commons/I18nModel.js
++++ b/shell/Commons/I18nModel.js
+@@ -235,6 +235,15 @@ function createRegistry() {
+   var nextOrder = 0
+   var state = { revision: 0, merged: {}, global: {}, parents: {}, plurals: {} }
+ 
++  // The startup cache is registered as an ordinary owner at the lowest
++  // precedence so it can answer lookups for the frames before the real packs
++  // register. It is only ever a stand-in: once a live pack has registered,
++  // the cache copy is dropped and no longer reloadable, so disabling that
++  // pack actually reverts the interface instead of falling back to a stale
++  // duplicate of the strings it just removed.
++  var CACHE_OWNER = "cache"
++  var liveOwnerSeen = false
++
+   // Fold a list of owners into { merged, parents, plurals, global }.
+   function computeState(list) {
+     // Lower precedence number wins. Among equals, the later registration
+@@ -370,6 +379,10 @@ function createRegistry() {
+       precedence: typeof opts.precedence === "number" ? opts.precedence : 0,
+       order: nextOrder++
+     }
++    if (ownerId !== CACHE_OWNER) {
++      liveOwnerSeen = true
++      delete owners[CACHE_OWNER]
++    }
+     rebuild()
+     return existing ? "replaced" : "added"
+   }
+@@ -381,13 +394,10 @@ function createRegistry() {
+     return true
+   }
+ 
+-  // Serializable view of the merged state, for the startup cache. Loading it
+-  // back registers it as one owner at the lowest precedence, so live packs
+-  // override it as soon as they register. The snapshot excludes that owner:
+-  // otherwise disabling every pack would write the old cache back out and
+-  // the translations would return at the next login.
+-  var CACHE_OWNER = "cache"
+-
++  // Serializable view of the merged state, for the startup cache. The
++  // snapshot excludes the cache owner: otherwise disabling every pack would
++  // write the old cache back out and the translations would return at the
++  // next login.
+   function snapshot(options) {
+     var exclude = options && options.exclude !== undefined ? options.exclude : CACHE_OWNER
+     var view = computeState(ownerList(exclude))
+@@ -400,6 +410,10 @@ function createRegistry() {
+ 
+   function loadSnapshot(snap, ownerId) {
+     if (!snap || typeof snap !== "object" || snap.version !== 1) return false
++    // Writing the cache re-triggers the FileView that loads it. Without this
++    // a pack's own registration would come straight back in as a cache owner
++    // that outlives it.
++    if (liveOwnerSeen && (ownerId || CACHE_OWNER) === CACHE_OWNER) return false
+     setCatalogs(ownerId || CACHE_OWNER, snap.catalogs, { links: snap.links, precedence: 1000 })
+     return true
+   }
+-- 
+2.55.0
+

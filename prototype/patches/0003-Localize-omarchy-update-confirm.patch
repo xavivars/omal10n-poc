@@ -1,7 +1,7 @@
-From e542adc5a14476a5043a255fc66258a86c5af1c8 Mon Sep 17 00:00:00 2001
+From 1b2412304171afdd23c90f40e0d48dbb59b1f083 Mon Sep 17 00:00:00 2001
 From: Xavi Ivars <xavi.ivars@gmail.com>
 Date: Thu, 27 Aug 2026 02:06:50 +0200
-Subject: [PATCH 3/3] Localize omarchy-update-confirm
+Subject: [PATCH 3/6] Localize omarchy-update-confirm
 
 The Bash side of the primitive on one interactive script: six prompt
 strings through omarchy_t, with the release URL passed as an argument
@@ -41,5 +41,5 @@ index 472927f1..d1e67904 100755
    exit 1
  fi
 -- 
-2.49.0
+2.55.0
 

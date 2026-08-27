@@ -1,0 +1,8 @@
+{
+  "": {
+    "language": "ca",
+    "plural-forms": "nplurals=2; plural=(n != 1);",
+    "source": "l10n-prototype@1b241230"
+  },
+  "dddd HH:mm": "dddd h:mm ap"
+}

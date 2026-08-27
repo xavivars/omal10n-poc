@@ -1,7 +1,7 @@
-From 0d52c5f58f9251e6457aa57f5ae8896a843c782e Mon Sep 17 00:00:00 2001
+From 254d5679370a4770380bcb1d570391cbf68416ba Mon Sep 17 00:00:00 2001
 From: Xavi Ivars <xavi.ivars@gmail.com>
 Date: Thu, 27 Aug 2026 02:04:45 +0200
-Subject: [PATCH 2/3] Localize omarchy.menu and the confirm dialog
+Subject: [PATCH 2/6] Localize omarchy.menu and the confirm dialog
 
 Menu entries are data, so they are translated as the tree is assembled;
 the six hardcoded strings go through the bound translator. The plugin
@@ -130,5 +130,5 @@ index eeaf2e25..066aff2a 100644
                opacity: 0.7
                font.family: root.fontFamily
 -- 
-2.49.0
+2.55.0
 

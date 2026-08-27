@@ -3,8 +3,11 @@
 Making the [Omarchy](https://omarchy.org) 4 desktop shell translatable — design work, prior-art
 notes, and (eventually) a proof-of-concept language pack.
 
-> **Status: prototype built, unrun.** The architecture proposal and a complete end-to-end
-> prototype against `quattro`. It has not yet been executed on a real Omarchy session.
+> **Status: validated on a real session.** The architecture proposal and a complete end-to-end
+> prototype against `quattro`, now run on an Omarchy machine: menu, `msgctxt` separation, the
+> confirm dialog, the Bash helper, and the plugin-clone fallthrough all confirmed rendering in
+> Catalan. Along the way it fixed [#6360](https://github.com/basecamp/omarchy/issues/6360) — the
+> clock now reads `dijous 2:50 a. m.` instead of `Thursday 02:50`.
 
 ## The problem
 
@@ -84,14 +87,14 @@ translator comments, and `msgmerge` fuzzy state — which is the only real answe
 | `omarchy-l10n-architecture.md` | The architecture proposal, for maintainers |
 | `omarchy-l10n-architecture.html` | Same document, standalone browser version |
 | `prototype/` | The whole chain, built end to end — see [`prototype/README.md`](./prototype/README.md) |
-| `prototype/patches/` | The upstream changes as a 3-patch series against `quattro`: the primitive, the menu, one CLI script |
+| `prototype/patches/` | The upstream changes as a 6-patch series against `quattro`: the primitive, the menu, one CLI script, and the clock |
 | `prototype/tools/` | `omarchy-i18n-extract` and `omarchy-i18n-build` — what the hub would run in CI |
 | `prototype/i18n/` | Extracted POTs and the Catalan PO files, made with real `msginit` |
 | `prototype/omarchy-lang-ca/` | The language pack, catalogs built from those PO files |
 
-`npm test` runs 40 model tests, 10 tooling tests, and 31 Bash tests. The QML has not been
-executed — there is no Qt on the machine this was written on — and `prototype/README.md` carries
-the checklist for the first run on a real Omarchy session.
+`npm test` runs 43 model tests, 10 tooling tests, and 31 Bash tests. The QML now runs on a real
+session too; `prototype/README.md` carries the checklist, and records what the first run settled
+and what it broke.
 
 ## Prior art
 
@@ -103,7 +106,9 @@ the checklist for the first run on a real Omarchy session.
   on its own first.
 - [basecamp/omarchy#6360](https://github.com/basecamp/omarchy/issues/6360) — clock widget
   ignores system locale for weekday and month names. Closed pending a comprehensive translation
-  design; the source of the quote above.
+  design; the source of the quote above. **Fixed here by patch 0004**, and notably without any
+  catalog: `I18n.language` comes from the environment, so locale-correct dates land the moment
+  the primitive does, with no language pack installed.
 - [basecamp/omarchy#1187](https://github.com/basecamp/omarchy/issues/1187) — installer locale
   selection. Related but narrower: system locale, not shell strings.
 - [Omarchy shell plugin docs](https://github.com/basecamp/omarchy/blob/quattro/manual/32-shell-plugins.md)
@@ -112,10 +117,13 @@ the checklist for the first run on a real Omarchy session.
 ## Next steps
 
 1. ~~Build the primitive~~ — done
-2. ~~Prototype end to end~~ — built; not yet run on a real session
-3. Run it on an Omarchy machine: dev-link, install the pack, work through the checklist in
-   `prototype/README.md`, including the clone test
-4. Take the proposal, the patch series, and screenshots to the maintainers
+2. ~~Prototype end to end~~ — done
+3. ~~Get it running on an Omarchy machine~~ — dev-linked, patches applied, pack registering all
+   three catalogs
+4. ~~Work through the on-screen checks, including the clone test~~ — done, bar the reboot
+5. Reboot to settle the last row: does the cache load before the first frame, or does the clock
+   flash 24-hour before turning 12-hour
+6. Take the proposal, the patch series, and screenshots to the maintainers
 
 ## License
 
