@@ -1,7 +1,7 @@
-From 719d05dbbdb7f8d910eea0baaebf23bb74f60337 Mon Sep 17 00:00:00 2001
+From 09ff04254639c339b989116438557ea7d211a516 Mon Sep 17 00:00:00 2001
 From: Xavi Ivars <xavi.ivars@gmail.com>
 Date: Thu, 27 Aug 2026 02:51:07 +0200
-Subject: [PATCH 4/6] Take clock day and month names from the interface locale
+Subject: [PATCH 4/5] Take clock day and month names from the interface locale
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

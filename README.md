@@ -87,14 +87,14 @@ translator comments, and `msgmerge` fuzzy state — which is the only real answe
 | `omarchy-l10n-architecture.md` | The architecture proposal, for maintainers |
 | `omarchy-l10n-architecture.html` | Same document, standalone browser version |
 | `prototype/` | The whole chain, built end to end — see [`prototype/README.md`](./prototype/README.md) |
-| `prototype/patches/` | The upstream changes as a 6-patch series against `quattro`: the primitive, the menu, one CLI script, and the clock |
+| `prototype/patches/` | The upstream changes as a 5-patch series against `quattro`: the primitive, the menu, one CLI script, and the clock |
 | `prototype/tools/` | `omarchy-i18n-extract` and `omarchy-i18n-build` — what the hub would run in CI |
 | `prototype/i18n/` | Extracted POTs and the Catalan PO files, made with real `msginit` |
 | `prototype/omarchy-lang-ca/` | The language pack, catalogs built from those PO files |
 
-`npm test` runs 43 model tests, 10 tooling tests, 7 pack-loader tests, and 31 Bash tests. The QML now runs on a real
-session too; `prototype/README.md` carries the checklist, and records what the first run settled
-and what it broke.
+`npm test` runs 43 model tests, 10 tooling tests, 7 pack-loader tests, and 31 Bash tests. The QML
+runs on a real session too; `prototype/README.md` carries the acceptance checklist and the known
+limits.
 
 ## Prior art
 
@@ -118,11 +118,9 @@ and what it broke.
 
 1. ~~Build the primitive~~ — done
 2. ~~Prototype end to end~~ — done
-3. ~~Get it running on an Omarchy machine~~ — dev-linked, patches applied, pack registering all
-   three catalogs
-4. ~~Work through the on-screen checks, including the clone test~~ — done, bar the reboot
-5. Reboot to settle the last row: does the cache load before the first frame, or does the clock
-   flash 24-hour before turning 12-hour
+3. ~~Get it running on an Omarchy machine~~ — dev-linked, patches applied, pack registering
+4. ~~Work through the on-screen checks, including the clone test and a cold boot~~ — done
+5. Close the last checklist row, and the known limits in `prototype/README.md`
 6. Take the proposal, the patch series, and screenshots to the maintainers
 
 ## License

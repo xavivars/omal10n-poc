@@ -1,17 +1,35 @@
-From 35182e1236526df524f1335d3e6605d793dffda2 Mon Sep 17 00:00:00 2001
+From 90f977170d19f7cf1e11337181e74d08503a49d8 Mon Sep 17 00:00:00 2001
 From: Xavi Ivars <xavi.ivars@gmail.com>
 Date: Thu, 27 Aug 2026 02:04:45 +0200
-Subject: [PATCH 1/6] Add the I18n translation primitive
+Subject: [PATCH 1/5] Add the I18n translation primitive
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 
 qs.Commons.I18n and its Qt-free model, plus the Bash counterpart for
 bin/ scripts. No call sites change and no catalogs ship: with nothing
 registered every lookup returns its source string.
+
+Catalogs are contributed by owners — a language pack is one — and merged
+by precedence. A startup cache of the merged result is read synchronously
+so the first frame is already translated rather than repainting once the
+packs finish registering.
+
+That cache is a stand-in, not a second copy: it registers as an ordinary
+owner at the lowest precedence, and is dropped as soon as a live owner
+registers. Otherwise disabling a pack leaves the cache still holding an
+identical copy of the strings it just removed, and the interface stays
+translated until the next restart. For the same reason the snapshot
+written to disk excludes it, and it will not reload over live data —
+writing the cache re-triggers the FileView that loads it.
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
 ---
  default/bash/i18n          | 130 +++++++++++
- shell/Commons/I18n.qml     | 182 ++++++++++++++++
- shell/Commons/I18nModel.js | 431 +++++++++++++++++++++++++++++++++++++
+ shell/Commons/I18n.qml     | 182 +++++++++++++++
+ shell/Commons/I18nModel.js | 445 +++++++++++++++++++++++++++++++++++++
  shell/Commons/qmldir       |   1 +
- 4 files changed, 744 insertions(+)
+ 4 files changed, 758 insertions(+)
  create mode 100644 default/bash/i18n
  create mode 100644 shell/Commons/I18n.qml
  create mode 100644 shell/Commons/I18nModel.js
@@ -342,10 +360,10 @@ index 00000000..f9bff734
 +}
 diff --git a/shell/Commons/I18nModel.js b/shell/Commons/I18nModel.js
 new file mode 100644
-index 00000000..5e761873
+index 00000000..98f020c8
 --- /dev/null
 +++ b/shell/Commons/I18nModel.js
-@@ -0,0 +1,431 @@
+@@ -0,0 +1,445 @@
 +// I18nModel.js — the pure-JS core of qs.Commons.I18n.
 +//
 +// No Qt or QML dependencies, so it runs under node for tests and QML loads it
@@ -583,6 +601,15 @@ index 00000000..5e761873
 +  var nextOrder = 0
 +  var state = { revision: 0, merged: {}, global: {}, parents: {}, plurals: {} }
 +
++  // The startup cache is registered as an ordinary owner at the lowest
++  // precedence so it can answer lookups for the frames before the real packs
++  // register. It is only ever a stand-in: once a live pack has registered,
++  // the cache copy is dropped and no longer reloadable, so disabling that
++  // pack actually reverts the interface instead of falling back to a stale
++  // duplicate of the strings it just removed.
++  var CACHE_OWNER = "cache"
++  var liveOwnerSeen = false
++
 +  // Fold a list of owners into { merged, parents, plurals, global }.
 +  function computeState(list) {
 +    // Lower precedence number wins. Among equals, the later registration
@@ -718,6 +745,10 @@ index 00000000..5e761873
 +      precedence: typeof opts.precedence === "number" ? opts.precedence : 0,
 +      order: nextOrder++
 +    }
++    if (ownerId !== CACHE_OWNER) {
++      liveOwnerSeen = true
++      delete owners[CACHE_OWNER]
++    }
 +    rebuild()
 +    return existing ? "replaced" : "added"
 +  }
@@ -729,13 +760,10 @@ index 00000000..5e761873
 +    return true
 +  }
 +
-+  // Serializable view of the merged state, for the startup cache. Loading it
-+  // back registers it as one owner at the lowest precedence, so live packs
-+  // override it as soon as they register. The snapshot excludes that owner:
-+  // otherwise disabling every pack would write the old cache back out and
-+  // the translations would return at the next login.
-+  var CACHE_OWNER = "cache"
-+
++  // Serializable view of the merged state, for the startup cache. The
++  // snapshot excludes the cache owner: otherwise disabling every pack would
++  // write the old cache back out and the translations would return at the
++  // next login.
 +  function snapshot(options) {
 +    var exclude = options && options.exclude !== undefined ? options.exclude : CACHE_OWNER
 +    var view = computeState(ownerList(exclude))
@@ -748,6 +776,10 @@ index 00000000..5e761873
 +
 +  function loadSnapshot(snap, ownerId) {
 +    if (!snap || typeof snap !== "object" || snap.version !== 1) return false
++    // Writing the cache re-triggers the FileView that loads it. Without this
++    // a pack's own registration would come straight back in as a cache owner
++    // that outlives it.
++    if (liveOwnerSeen && (ownerId || CACHE_OWNER) === CACHE_OWNER) return false
 +    setCatalogs(ownerId || CACHE_OWNER, snap.catalogs, { links: snap.links, precedence: 1000 })
 +    return true
 +  }
