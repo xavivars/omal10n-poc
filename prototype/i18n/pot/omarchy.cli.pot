@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: omarchy omarchy.cli\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-27 00:48:58+0000\n"
+"POT-Creation-Date: 2026-08-28 09:17:59+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -13,7 +13,75 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Omarchy-Domain: omarchy.cli\n"
-"X-Omarchy-Source: l10n-prototype@1b241230\n"
+"X-Omarchy-Source: l10n-prototype@e8102497\n"
+
+#: bin/omarchy-language:376
+msgid "Any region"
+msgstr ""
+
+#: bin/omarchy-language:393
+msgid "Choose a language"
+msgstr ""
+
+#: bin/omarchy-language:397
+#, qt-format
+msgid "Region for %1"
+msgstr ""
+
+#: bin/omarchy-language:423
+msgid "System default not updated"
+msgstr ""
+
+#: bin/omarchy-language:423
+#, qt-format
+msgid "The session uses %1; /etc/locale.conf still says otherwise. Pick the language again to retry."
+msgstr ""
+
+#: bin/omarchy-language:443
+msgid "Add a language…"
+msgstr ""
+
+#: bin/omarchy-language:444
+msgid "Apply"
+msgstr ""
+
+#: bin/omarchy-language:446
+msgid "Language order"
+msgstr ""
+
+#: bin/omarchy-language:454
+msgid "Move to top"
+msgstr ""
+
+#: bin/omarchy-language:454
+msgid "Move up"
+msgstr ""
+
+#: bin/omarchy-language:454
+msgid "Move down"
+msgstr ""
+
+#: bin/omarchy-language:454
+msgid "Remove"
+msgstr ""
+
+#: bin/omarchy-language:454
+msgid "Back"
+msgstr ""
+
+#: bin/omarchy-language:583
+#, qt-format
+msgid "Language set to %1"
+msgstr ""
+
+#: bin/omarchy-language:584
+msgid "Apps already open keep their language until you log out and back in."
+msgstr ""
+
+#: bin/omarchy-language:591
+#, qt-format
+msgid "No translation pack found for %1, so the interface uses %2."
+msgstr ""
 
 #: bin/omarchy-update-confirm:10
 msgid "• You cannot stop the update once you start!"

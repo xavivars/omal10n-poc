@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: omarchy omarchy.cli\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-27 00:07:52+0000\n"
+"POT-Creation-Date: 2026-08-28 09:17:59+0000\n"
 "PO-Revision-Date: 2026-08-27 00:07:52+0000\n"
 "Last-Translator: Xavi Ivars <xavi.ivars@gmail.com>\n"
 "Language-Team: Catalan\n"
@@ -13,6 +13,73 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Omarchy-Domain: omarchy.cli\n"
 "X-Omarchy-Source: l10n-prototype@e542adc5\n"
+
+#: bin/omarchy-language:376
+msgid "Any region"
+msgstr "Qualsevol regió"
+
+#: bin/omarchy-language:393
+msgid "Choose a language"
+msgstr "Trieu un idioma"
+
+#: bin/omarchy-language:397
+#, qt-format
+msgid "Region for %1"
+msgstr "Regió per a %1"
+
+#: bin/omarchy-language:423
+msgid "System default not updated"
+msgstr "No s'ha actualitzat el valor per defecte del sistema"
+
+#: bin/omarchy-language:423
+msgid "The session uses %1; /etc/locale.conf still says otherwise. Pick the language again to retry."
+msgstr "La sessió fa servir %1; /etc/locale.conf encara diu una altra cosa. Torneu a triar l'idioma per a reintentar-ho."
+
+#: bin/omarchy-language:443
+msgid "Add a language…"
+msgstr "Afegeix un idioma…"
+
+#: bin/omarchy-language:444
+msgid "Apply"
+msgstr "Aplica"
+
+#: bin/omarchy-language:446
+msgid "Language order"
+msgstr "Ordre dels idiomes"
+
+#: bin/omarchy-language:454
+msgid "Move to top"
+msgstr "Mou al principi"
+
+#: bin/omarchy-language:454
+msgid "Move up"
+msgstr "Mou amunt"
+
+#: bin/omarchy-language:454
+msgid "Move down"
+msgstr "Mou avall"
+
+#: bin/omarchy-language:454
+msgid "Remove"
+msgstr "Suprimeix"
+
+#: bin/omarchy-language:454
+msgid "Back"
+msgstr "Enrere"
+
+#: bin/omarchy-language:583
+#, qt-format
+msgid "Language set to %1"
+msgstr "S'ha establert l'idioma a %1"
+
+#: bin/omarchy-language:584
+msgid "Apps already open keep their language until you log out and back in."
+msgstr "Les aplicacions ja obertes conserven el seu idioma fins que tanqueu la sessió i torneu a entrar."
+
+#: bin/omarchy-language:591
+#, qt-format
+msgid "No translation pack found for %1, so the interface uses %2."
+msgstr "No s'ha trobat cap paquet de traducció per a %1, així que la interfície fa servir %2."
 
 #: bin/omarchy-update-confirm:10
 msgid "• You cannot stop the update once you start!"
@@ -38,3 +105,6 @@ msgstr "S'ha cancel·lat l'actualització"
 #: bin/omarchy-update-confirm:8
 msgid "Ready to update?"
 msgstr "Esteu a punt per a actualitzar?"
+
+#~ msgid "Language order, highest priority first"
+#~ msgstr "Ordre dels idiomes, el de més prioritat primer"

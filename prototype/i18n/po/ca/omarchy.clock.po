@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: omarchy omarchy.clock\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-27 00:48:58+0000\n"
+"POT-Creation-Date: 2026-08-28 08:15:49+0000\n"
 "PO-Revision-Date: 2026-08-27 00:48:58+0000\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
@@ -21,9 +21,6 @@ msgid ""
 "mm"
 msgstr ""
 
-#. Default bar clock format. Qt date/time specifiers, not prose: dddd = long
-#. weekday, h = 12-hour, HH = 24-hour, ap = am/pm marker. Reorder or switch to
-#. 12-hour only where the locale actually does; do not translate the letters.
 #: shell/plugins/panels/clock/BarWidget.qml:26
 msgid "dddd HH:mm"
 msgstr "dddd h:mm ap"

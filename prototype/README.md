@@ -10,12 +10,14 @@ prototype/
 │   ├── I18nModel.js          Qt-free core: locale rules, plurals, the catalog registry
 │   └── qmldir                upstream's file plus the one line exporting I18n
 ├── default/bash/i18n       omarchy_t / omarchy_tn for bin/ scripts
+├── bin/omarchy-language    the picker's backend: chain expansion, LANG, packs, restart
 ├── patches/                the same, as a git patch series against quattro
 │   ├── 0001  Add the I18n translation primitive          ← PR #1
 │   ├── 0002  Localize omarchy.menu and the confirm dialog ← PR #2, first slice
 │   ├── 0003  Localize omarchy-update-confirm              ← PR #2, Bash slice
 │   ├── 0004  Clock names from the interface locale        ← closes #6360
-│   └── 0005  Translatable default clock format            ← first login-visible string
+│   ├── 0005  Translatable default clock format            ← first login-visible string
+│   └── 0006  Add a language picker under Setup            ← Setup › Language
 ├── tools/                  what the omarchy-i18n hub would run in CI
 │   ├── omarchy-i18n-extract  checkout → one POT per domain
 │   ├── omarchy-i18n-build    PO → the JSON catalogs a language pack ships
@@ -30,7 +32,7 @@ prototype/
 ├── screenshots/            what it looks like on a real session
 │   ├── menu-ca.png           the menu, and the «Vés…» root prompt
 │   └── clock-ca.png          the bar clock, which is issue #6360
-└── test/                   npm test — model, tools, pack loader, Bash helper
+└── test/                   npm test — model, tools, pack loader, Bash helper, picker
 ```
 
 ## The chain
@@ -69,7 +71,13 @@ While iterating:
 | What the pack registered | `~/.cache/omarchy/i18n/ca.json` — `jq '.catalogs \| keys'` |
 | Force the pack to re-register | `omarchy plugin disable lang.ca && omarchy plugin enable lang.ca` |
 | Copy edits back out of the checkout | `prototype/demo.sh sync` |
+| Republish the pack after rebuilding catalogs | `prototype/demo.sh pack` |
 | Undo everything | `prototype/demo.sh teardown`, then reboot |
+
+The pack is installed the way a real one would be — `omarchy plugin add` from a git
+remote — so that `omarchy-language` can update it. The remote is a bare repo at
+`~/src/omarchy-lang-ca.git` that `setup` creates and `pack` republishes to, and
+`~/.config/omarchy/language-packs` points `ca` at it instead of GitHub.
 
 The primitive exists twice — `prototype/shell/` is what the tests import, the
 dev-linked checkout is what actually runs — so `demo.sh sync` copies the mirrored files
@@ -78,6 +86,67 @@ the tests. One direction on purpose: the checkout is both where you edit and whe
 patches are cut from, so a two-way sync would only offer a way to overwrite the wrong
 copy. It refuses to run against uncommitted changes in those files, since those would
 reach `prototype/` but not the patches.
+
+## Switching language from the menu
+
+`SUPER + SPACE` → Setup → Language → pick one. That is the whole demo.
+
+The submenu lists the languages with a pack, ticks the current one, and has three more
+rows. **Other…** opens a picker over every language this machine can generate a locale
+for (by endonym — Deutsch, 日本語 — 43 on a stock install), then a second one over
+the regions and variants glibc knows for it — *Any region* first, then *Argentina*,
+*Spain (valencia)*, *Serbia (latin)* — with the territory names taken from glibc's own
+locale sources, so nothing is hand-maintained. **Language order** is the
+fallback list as a priority list, the way Ubuntu's Language Support did it: pick an
+entry, then *Move to top / up / down / Remove*, add one from the picker, Apply — all from
+the keyboard, no file in sight. **Advanced** opens the same chain as a file in a floating
+terminal and applies it on save.
+
+A chain written out in full, from the list or the file, is taken *as written*: entries
+removed stay removed. Only a single pick is expanded (`ca_ES` → `ca_ES:ca`). Note that
+gettext itself still tries `ll_CC@mod`, `ll_CC`, `ll` for each entry it is given, so the
+list is what the user chose to say rather than what glibc will do with it. After every
+switch the new shell shows a toast, in the new language, saying what was set and that
+apps already open keep theirs until the next login — and, when a language has no
+translation pack yet, that the interface stays in English for it.
+
+Behind it, `omarchy-language <code>`:
+
+1. resolves the code to a chain: a bare language keeps whatever chain is already in
+   force for it — the picker's own file, else `/etc/locale.conf` — so picking «Català»
+   on a machine set up as `ca_ES@valencia:ca@valencia:ca_ES:ca` keeps exactly that,
+   and a hand-edited chain survives re-picking its language. Otherwise the code is
+   expanded the way gettext would (`ca_ES@valencia` → `ca_ES@valencia:ca@valencia:ca_ES:ca`).
+   `LANG` follows as the first entry with a generated locale — glibc ignores
+   `LANGUAGE` under the C locale, so a chain with no real `LANG` behind it would
+   translate the shell and nothing else;
+2. generates the locale first, in a floating terminal, if none in the chain exists;
+3. writes both to `~/.config/environment.d/omarchy-language.conf` — applied by the
+   user manager at next login, and sourced by `omarchy-launch-shell` right now;
+4. installs or updates the pack for each language in the chain;
+5. restarts the shell. About half a second, end to end;
+6. then asks — once, through Omarchy's polkit agent — to write the same `LANG` and
+   `LANGUAGE` into `/etc/locale.conf`, so the system default follows the picker. Not
+   with `localectl`: `localed` validates each value as a single locale name and refuses
+   a chain with a colon in it, which is what every real chain has. The file is rewritten
+   in place through `pkexec`, other lines and comments kept. Skipped when the system
+   already says the same; declined leaves it alone, changes nothing about the session,
+   and says so in a toast.
+
+GNOME does the first five per user (AccountsService, applied by GDM at login) and makes
+the sixth an explicit "apply system-wide" button; KDE stops at the fifth. Omarchy is a
+one-user desktop, so the system default following the picker is the less surprising
+choice here — and `/etc/locale.conf` is also what `preferred_chain` falls back to for a
+language never picked, which only makes sense if it is kept current.
+
+Setup › Language › Advanced opens the file in a floating terminal and applies whatever
+`LANGUAGE` says when the editor closes — the same steps 1–5, from a hand-written
+chain. The first time, the file is seeded from what is in force.
+
+`hyprctl setenv` was the obvious route for the live change and does not work: the
+compositor's exec environment is fixed at session start, which is why the shell
+sources the file itself. Apps launched after a switch keep the old language until
+the next login; the shell switches immediately.
 
 ## Verifying it
 
@@ -94,6 +163,8 @@ reach `prototype/` but not the patches.
 | Second login shows no flash of English | synchronous cache load before first frame | ✅ |
 | The clone test, below | `clonedFrom` fallthrough | ✅ |
 | `omarchy plugin disable lang.ca` → English with no restart | owned registration, cache not self-feeding | ▶ |
+| Setup › Language › English, then › Català, from the menu | the picker, end to end | ▶ |
+| After the next login the choice is still in force | `environment.d` reaches the session | ▶ |
 
 The uninstall dialog has no menu entry: open the **apps** menu (`SUPER + ALT + SPACE`),
 filter, press `↓` so `cursorActive` is set, then `Delete`. `requestDeleteSelected()`
@@ -139,3 +210,14 @@ Worth stating upstream rather than being caught by:
 - **Search matches on translated labels**, so typing `apps` in a Catalan menu will not
   find «Aplicacions». Keeping the source label in the searchable text is a one-line
   change in `MenuModel.nameSearchText` if that turns out to matter.
+- **Apps launched after a switch keep the old language until the next login.** The
+  compositor's exec environment is fixed at session start and `hyprctl setenv` does not
+  reach it; only the shell re-reads the file. The toast says so. GNOME behaves the same.
+- **The polkit-agent readiness signal is a log line.** After the restart the agent plugin
+  registers asynchronously; until it does, polkit refuses rather than asks. The picker
+  waits for the shell's *"polkit agent registered"* journal line before writing
+  `/etc/locale.conf`. Brittle, and worth an IPC upstream.
+- **`localectl` cannot write a chain.** `localed` validates each value as one locale name
+  and refuses `LANGUAGE=a:b`, so the system file is rewritten through `pkexec` instead.
+- **Territory names are English** (*Spain*, not *Espanya*): they come from glibc's locale
+  sources. Translating them is its own domain and a few hundred strings.

@@ -1,7 +1,7 @@
 From 3fd2725c123fc31648e555307a2c0fc4cb1550db Mon Sep 17 00:00:00 2001
 From: Xavi Ivars <xavi.ivars@gmail.com>
 Date: Thu, 27 Aug 2026 02:51:19 +0200
-Subject: [PATCH 5/5] Make the default clock format translatable
+Subject: [PATCH 5/6] Make the default clock format translatable
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

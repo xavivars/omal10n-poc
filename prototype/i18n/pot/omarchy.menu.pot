@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: omarchy omarchy.menu\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-27 00:48:58+0000\n"
+"POT-Creation-Date: 2026-08-28 09:17:59+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -13,7 +13,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Omarchy-Domain: omarchy.menu\n"
-"X-Omarchy-Source: l10n-prototype@1b241230\n"
+"X-Omarchy-Source: l10n-prototype@e8102497\n"
 
 #: default/omarchy/omarchy-menu.jsonc:about.label
 #: default/omarchy/omarchy-menu.jsonc:style.about.label
@@ -589,6 +589,42 @@ msgstr ""
 
 #: default/omarchy/omarchy-menu.jsonc:setup.label
 msgid "Setup"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.language.advanced.description
+msgid "Edit the language order (LANGUAGE) by hand"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.language.advanced.label
+msgid "Advanced"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.language.ca.label
+msgid "Català"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.language.en.label
+msgid "English"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.language.label
+msgid "Language"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.language.order.description
+msgid "The fallback list, highest priority first"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.language.order.label
+msgid "Language order"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.language.other.description
+msgid "Any language this machine can generate a locale for"
+msgstr ""
+
+#: default/omarchy/omarchy-menu.jsonc:setup.language.other.label
+msgid "Other…"
 msgstr ""
 
 #: default/omarchy/omarchy-menu.jsonc:setup.monitors.label

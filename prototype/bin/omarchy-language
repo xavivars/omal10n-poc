@@ -1,0 +1,680 @@
+#!/bin/bash
+
+# omarchy:summary=Set the interface language and its fallback chain
+# omarchy:args=[language|chain] [--no-restart] | --chain | --pick | --order | --edit | --install <locale> <chain>
+# omarchy:examples=omarchy language ca | omarchy language ca_ES@valencia:es | omarchy language --order
+
+# The interface language is LANGUAGE, gettext's fallback chain, highest
+# priority first. Giving one language expands it the way gettext would:
+#
+#   ca              →  ca
+#   ca_ES           →  ca_ES:ca
+#   ca_ES@valencia  →  ca_ES@valencia:ca@valencia:ca_ES:ca
+#
+# A bare language keeps any chain already known for it, so picking «Català»
+# on a machine set up as ca_ES@valencia:ca@valencia:ca_ES:ca keeps exactly
+# that. Every chain applied is remembered per language in
+# ~/.config/omarchy/language-chains, which is what makes a hand-edited chain
+# survive switching to another language and back; the system's
+# /etc/locale.conf is the fallback for a language never set here.
+#
+# LANG follows it as the first entry of the chain that is a generated locale
+# on this machine. It has to: glibc ignores LANGUAGE entirely under the C
+# locale, so a chain with no real LANG behind it translates the shell and
+# nothing else. When no entry is generated, the locale is generated first,
+# in a floating terminal, the same way a missing default browser is installed.
+#
+# Both go to ~/.config/environment.d, which the user manager applies at the
+# next login for everything, and which omarchy-launch-shell reads right away
+# for the shell. The language packs for every language in the chain are
+# installed or updated, then the shell restarts.
+#
+# The system default follows too: after the restart, the same LANG and
+# LANGUAGE go to /etc/locale.conf, so TTY logins and the fallback for a
+# language never picked here agree with the picker. Not through localectl:
+# localed validates each value as one locale name and refuses a chain with
+# a colon in it. The file is rewritten in place through pkexec — the other
+# lines and comments kept — which is a polkit action answered in Omarchy's
+# own agent; declining it leaves the system file alone and changes nothing
+# about the session. Skipped when the system already says the same.
+
+# shellcheck disable=SC1091
+source "${OMARCHY_PATH:-/usr/share/omarchy}/default/bash/i18n" 2>/dev/null || { omarchy_t() { local s="$1"; shift; local i=1; for a in "$@"; do s="${s//%$i/$a}"; i=$((i+1)); done; echo "$s"; }; }
+
+CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+LANGUAGE_CONF="$CONFIG_HOME/environment.d/omarchy-language.conf"
+PLUGINS_DIR="$CONFIG_HOME/omarchy/plugins"
+PACKS_CONF="$CONFIG_HOME/omarchy/language-packs"
+CHAINS_CONF="$CONFIG_HOME/omarchy/language-chains"
+PACK_URL_TEMPLATE="${OMARCHY_LANG_PACK_URL:-https://github.com/omarchy-i18n/omarchy-lang-%s.git}"
+SUPPORTED_LOCALES="${OMARCHY_SUPPORTED_LOCALES:-/usr/share/i18n/SUPPORTED}"
+SYSTEM_LOCALE_CONF="${OMARCHY_SYSTEM_LOCALE_CONF:-/etc/locale.conf}"
+LOCALE_SOURCES="${OMARCHY_LOCALE_SOURCES:-/usr/share/i18n/locales}"
+
+# ---------------------------------------------------------------------------
+# Pure helpers. Sourcing this file (rather than running it) exposes these for
+# tests without running main.
+
+# ll from any of ll, ll_CC, ll_CC.enc, ll_CC@mod, ll@mod.
+language_of() {
+  local entry="${1%%.*}"
+  entry="${entry%%@*}"
+  echo "${entry%%_*}"
+}
+
+# The gettext expansion of a chain spec, deduplicated, stopping at English —
+# past English every lookup already returns the source string.
+expand_chain() {
+  local spec="$1" entry lang region modifier base
+  local -a out=()
+  local IFS=':'
+  # shellcheck disable=SC2206
+  local -a given=($spec)
+  unset IFS
+
+  add() { local candidate; for candidate in "${out[@]}"; do [[ $candidate == "$1" ]] && return 0; done; out+=("$1"); }
+
+  for entry in "${given[@]}"; do
+    entry="${entry%%.*}"
+    [[ -z $entry || $entry == C || $entry == POSIX ]] && continue
+    modifier=""
+    [[ $entry == *@* ]] && modifier="${entry#*@}" && entry="${entry%%@*}"
+    lang="${entry%%_*}"
+    region=""
+    [[ $entry == *_* ]] && region="${entry#*_}"
+    base="$lang${region:+_$region}"
+
+    if [[ -n $modifier ]]; then
+      add "$base@$modifier"
+      [[ -n $region ]] && add "$lang@$modifier"
+    fi
+    [[ -n $region ]] && add "$base"
+    add "$lang"
+    [[ $lang == en ]] && break
+  done
+
+  local IFS=':'
+  echo "${out[*]}"
+}
+
+# A chain the user wrote out in full — from the order list or the file — is
+# taken as written: encodings dropped, C/POSIX dropped, duplicates dropped,
+# and nothing added. Expanding it would put back an entry they had just
+# removed. (gettext itself still tries ll_CC@mod, ll_CC, ll for each entry;
+# the list is what the user chose to say, not what glibc will do with it.)
+normalize_chain() {
+  local spec="$1" entry
+  local -a out=()
+  local IFS=':'
+  # shellcheck disable=SC2206
+  local -a given=($spec)
+  unset IFS
+  for entry in "${given[@]}"; do
+    entry="${entry%%.*}"
+    [[ -z $entry || $entry == C || $entry == POSIX ]] && continue
+    local seen=0 c; for c in "${out[@]}"; do [[ $c == "$entry" ]] && seen=1; done
+    (( seen )) || out+=("$entry")
+  done
+  local IFS=':'
+  echo "${out[*]}"
+}
+
+# Reordering, on a ':'-separated chain. Unknown entries leave it unchanged.
+chain_move() {
+  local chain="$1" entry="$2" how="$3" i n
+  local IFS=':'
+  # shellcheck disable=SC2206
+  local -a e=($chain)
+  unset IFS
+  n=${#e[@]}
+  for (( i = 0; i < n; i++ )); do [[ ${e[i]} == "$entry" ]] && break; done
+  (( i < n )) || { echo "$chain"; return 0; }
+  case "$how" in
+    top)  (( i > 0 )) && { e=("${e[i]}" "${e[@]:0:i}" "${e[@]:i+1}"); } ;;
+    up)   (( i > 0 )) && { local t="${e[i-1]}"; e[i-1]="${e[i]}"; e[i]="$t"; } ;;
+    down) (( i < n - 1 )) && { local t="${e[i+1]}"; e[i+1]="${e[i]}"; e[i]="$t"; } ;;
+  esac
+  local IFS=':'
+  echo "${e[*]}"
+}
+
+chain_remove() {
+  local chain="$1" entry="$2"
+  local IFS=':'
+  # shellcheck disable=SC2206
+  local -a e=($chain) out=()
+  unset IFS
+  local c; for c in "${e[@]}"; do [[ $c == "$entry" ]] || out+=("$c"); done
+  local IFS=':'
+  echo "${out[*]}"
+}
+
+chain_add() {
+  local chain="$1" entry="$2"
+  [[ -z $chain ]] && { echo "$entry"; return 0; }
+  normalize_chain "$chain:$entry"
+}
+
+# Generated locales, one per line, as `locale -a` prints them (ll_CC.utf8@mod).
+generated_locales() {
+  locale -a 2>/dev/null
+}
+
+# LANG for a chain: the first entry with a generated locale behind it, as
+# ll_CC.UTF-8[@mod]. Empty when nothing in the chain is generated.
+first_supported() {
+  local chain="$1" entry lang modifier base match
+  local generated
+  generated="$(generated_locales)"
+  local IFS=':'
+  # shellcheck disable=SC2206
+  local -a entries=($chain)
+  unset IFS
+
+  for entry in "${entries[@]}"; do
+    modifier=""
+    [[ $entry == *@* ]] && modifier="${entry#*@}" && entry="${entry%%@*}"
+    lang="${entry%%_*}"
+    if [[ $entry == *_* ]]; then
+      base="$entry"
+      match="$(grep -ix "${base}\.utf8${modifier:+@$modifier}" <<<"$generated" | head -n 1)"
+    else
+      # A bare language is never a locale; any generated region of it will do.
+      [[ -n $modifier ]] && continue
+      match="$(grep -i "^${lang}_[A-Z]*\.utf8$" <<<"$generated" | head -n 1)"
+    fi
+    if [[ -n $match ]]; then
+      base="${match%%.*}"
+      echo "$base.UTF-8${modifier:+@$modifier}"
+      return 0
+    fi
+  done
+  return 1
+}
+
+# The locale to generate for a chain none of whose entries exist yet: the
+# first regional entry, else the first region glibc knows for the language.
+suggest_locale() {
+  local chain="$1" entry lang
+  local IFS=':'
+  # shellcheck disable=SC2206
+  local -a entries=($chain)
+  unset IFS
+
+  for entry in "${entries[@]}"; do
+    entry="${entry%%@*}"
+    [[ $entry == *_* ]] && { echo "$entry.UTF-8"; return 0; }
+  done
+  local found
+  for entry in "${entries[@]}"; do
+    lang="$(language_of "$entry")"
+    # de → de_DE, pt → pt_PT: the region named after the language is the
+    # conventional default. Otherwise the first region glibc lists.
+    found="$(grep -o "^${lang}_${lang^^}\.UTF-8" "$SUPPORTED_LOCALES" 2>/dev/null | head -n 1)"
+    [[ -n $found ]] || found="$(grep -o "^${lang}_[A-Z]*\.UTF-8" "$SUPPORTED_LOCALES" 2>/dev/null | head -n 1)"
+    [[ -n $found ]] && { echo "$found"; return 0; }
+  done
+  return 1
+}
+
+# The chain in force: the file this script writes, else the session.
+current_chain() {
+  local from_file=""
+  [[ -f $LANGUAGE_CONF ]] && from_file="$(sed -n 's/^LANGUAGE=//p' "$LANGUAGE_CONF" | tail -n 1)"
+  if [[ -n $from_file ]]; then
+    echo "$from_file"
+  elif [[ -n ${LANGUAGE:-} ]]; then
+    echo "$LANGUAGE"
+  else
+    expand_chain "${LC_ALL:-${LC_MESSAGES:-${LANG:-en}}}"
+  fi
+}
+
+# Value of KEY= in a locale.conf-style file, last one wins, empty if absent.
+conf_value() {
+  local file="$1" key="$2"
+  [[ -f $file ]] && sed -n "s/^${key}=//p" "$file" | tail -n 1
+}
+
+# The chain remembered for a language by an earlier apply, if any.
+remembered_chain() {
+  [[ -f $CHAINS_CONF ]] && awk -v l="$1" '$1 == l { print $2; exit }' "$CHAINS_CONF"
+}
+
+remember_chain() {
+  local chain="$1" lang
+  lang="$(language_of "${chain%%:*}")"
+  mkdir -p "$(dirname "$CHAINS_CONF")"
+  { [[ -f $CHAINS_CONF ]] && awk -v l="$lang" '$1 != l' "$CHAINS_CONF"; echo "$lang $chain"; } >"$CHAINS_CONF.tmp"
+  mv "$CHAINS_CONF.tmp" "$CHAINS_CONF"
+}
+
+# The chain already known for a language, if any: one remembered from an
+# earlier apply, then this script's current file, then the system's LANGUAGE,
+# then the system's LANG. Empty otherwise.
+preferred_chain() {
+  local lang="$1" candidate
+  for candidate in \
+    "$(remembered_chain "$lang")" \
+    "$(conf_value "$LANGUAGE_CONF" LANGUAGE)" \
+    "$(conf_value "$SYSTEM_LOCALE_CONF" LANGUAGE)" \
+    "$(conf_value "$SYSTEM_LOCALE_CONF" LANG)"; do
+    [[ -n $candidate ]] || continue
+    candidate="$(expand_chain "$candidate")"
+    [[ "$(language_of "${candidate%%:*}")" == "$lang" ]] && { echo "$candidate"; return 0; }
+  done
+  return 1
+}
+
+# What LANG and LANGUAGE are right now, for seeding the file the first time
+# it is edited: this script's file, else the session, else the system's.
+seed_conf() {
+  [[ -f $LANGUAGE_CONF ]] && return 0
+  local lang_value chain
+  chain="${LANGUAGE:-$(conf_value "$SYSTEM_LOCALE_CONF" LANGUAGE)}"
+  lang_value="${LANG:-$(conf_value "$SYSTEM_LOCALE_CONF" LANG)}"
+  [[ -n $chain ]] || chain="$(expand_chain "${lang_value:-en}")"
+  [[ -n $lang_value ]] || lang_value="$(first_supported "$chain" || echo C.UTF-8)"
+  write_conf "$lang_value" "$chain" --no-env
+}
+
+pack_url() {
+  local lang="$1" url
+  if [[ -f $PACKS_CONF ]]; then
+    url="$(awk -v l="$lang" '$1 == l { print $2; exit }' "$PACKS_CONF")"
+    [[ -n $url ]] && { echo "$url"; return 0; }
+  fi
+  # shellcheck disable=SC2059
+  printf "$PACK_URL_TEMPLATE" "$lang"
+}
+
+# ---------------------------------------------------------------------------
+
+# Languages the picker offers, by their own names. Filtered at runtime to the
+# ones glibc can generate a locale for, so the list is what this machine can
+# actually switch to. A code missing here still works from the command line.
+ENDONYMS="ar العربية
+bg Български
+ca Català
+cs Čeština
+cy Cymraeg
+da Dansk
+de Deutsch
+el Ελληνικά
+en English
+es Español
+et Eesti
+eu Euskara
+fa فارسی
+fi Suomi
+fr Français
+ga Gaeilge
+gl Galego
+he עברית
+hi हिन्दी
+hr Hrvatski
+hu Magyar
+id Bahasa Indonesia
+it Italiano
+ja 日本語
+ko 한국어
+lt Lietuvių
+lv Latviešu
+nb Norsk bokmål
+nl Nederlands
+oc Occitan
+pl Polski
+pt Português
+ro Română
+ru Русский
+sk Slovenčina
+sl Slovenščina
+sr Српски
+sv Svenska
+th ไทย
+tr Türkçe
+uk Українська
+vi Tiếng Việt
+zh 中文"
+
+language_name() {
+  local name
+  name="$(awk -v c="$1" '$1 == c { $1 = ""; sub(/^ /, ""); print; exit }' <<<"$ENDONYMS")"
+  echo "${name:-$1}"
+}
+
+# One row per offered language this machine can generate, in the three-field
+# form omarchy-menu-select draws as icon, label, subtext: "<glyph>\t<Name>\t<code>".
+# Two fields would be read as glyph and label, and the name would land in the
+# icon column on top of the code.
+language_rows() {
+  local code name current glyph=$'\U000F05CA'
+  current="$(language_of "$(current_chain | cut -d: -f1)")"
+  while read -r code name; do
+    [[ -n $code ]] || continue
+    grep -q "^${code}_" "$SUPPORTED_LOCALES" 2>/dev/null || continue
+    if [[ $code == "$current" ]]; then
+      printf '%s\t%s ✓\t%s\n' "$glyph" "$name" "$code"
+    else
+      printf '%s\t%s\t%s\n' "$glyph" "$name" "$code"
+    fi
+  done <<<"$ENDONYMS"
+}
+
+# The territory a locale source names, in English, as glibc ships it.
+territory_of() {
+  local name
+  name="$(sed -n 's/^territory[[:space:]]*"\(.*\)"/\1/p' "$LOCALE_SOURCES/$1" 2>/dev/null | head -n 1)"
+  echo "${name:-$1}"
+}
+
+# The regional variants glibc can generate for a language, one
+# "<glyph>\t<Territory>\t<ll_CC[@mod]>" per line, after an "Any region" row
+# for the bare language. Modifiers are variants worth choosing — script or
+# dialect: "Serbia (latin)", "Spain (valencia)" — except @euro, a currency
+# relic from before the euro was the default, which is left out.
+region_rows() {
+  local lang="$1" glyph=$'\U000F05CA' code base modifier label
+  printf '%s\t%s\t%s\n' "$glyph" "$(omarchy_t "Any region")" "$lang"
+  grep -oE "^${lang}_[A-Z]+(\.UTF-8)?(@[a-z0-9]+)?[[:space:]]" "$SUPPORTED_LOCALES" 2>/dev/null |
+    sed -E 's/\.UTF-8//; s/[[:space:]]$//' | grep -v '@euro$' | sort -u |
+    while read -r code; do
+      base="${code%%@*}"; modifier=""; [[ $code == *@* ]] && modifier="${code#*@}"
+      label="$(territory_of "$code")"
+      [[ $label == "$code" ]] && label="$(territory_of "$base")"
+      [[ -n $modifier ]] && label="$label ($modifier)"
+      printf '%s\t%s\t%s\n' "$glyph" "$label" "$code"
+    done
+}
+
+# The menu's own picker: a language, then — when glibc knows regions for
+# it — a region, "Any region" first. Escape at the region step keeps the
+# bare language. Returns the chosen code.
+pick_language() {
+  local choice lang rows
+  choice="$(language_rows | omarchy-menu-select "$(omarchy_t "Choose a language")" -- --width 520)" || return 1
+  lang="${choice##*$'\t'}"
+  rows="$(region_rows "$lang")"
+  if (( $(wc -l <<<"$rows") > 1 )); then
+    choice="$(omarchy-menu-select "$(omarchy_t "Region for %1" "$(language_name "$lang")")" -- --width 520 <<<"$rows")" || { echo "$lang"; return 0; }
+    lang="${choice##*$'\t'}"
+  fi
+  echo "$lang"
+}
+
+# /etc/locale.conf with LANG and LANGUAGE set to the given values: existing
+# lines for those two replaced where they stand, everything else — other
+# LC_* keys, comments, blank lines — kept as it is, missing keys appended.
+merge_locale_conf() {
+  local existing="$1" lang_value="$2" chain="$3" line seen_lang=0 seen_chain=0
+  [[ -n $existing ]] && while IFS= read -r line || [[ -n $line ]]; do
+    case "$line" in
+      LANG=*)     echo "LANG=$lang_value"; seen_lang=1 ;;
+      LANGUAGE=*) echo "LANGUAGE=$chain"; seen_chain=1 ;;
+      *)          echo "$line" ;;
+    esac
+  done <<<"$existing"
+  (( seen_lang )) || echo "LANG=$lang_value"
+  (( seen_chain )) || echo "LANGUAGE=$chain"
+}
+
+# Wait for the shell's polkit agent to register after the restart, so the
+# request below is asked rather than refused. The shell logs it; that line
+# is the only readiness signal there is.
+wait_for_polkit_agent() {
+  local since="$1" attempt
+  for attempt in $(seq 1 "${OMARCHY_LANGUAGE_AGENT_TRIES:-20}"); do
+    journalctl --user -t omarchy-shell --since "$since" --no-pager 2>/dev/null | grep -q "polkit agent registered" && return 0
+    sleep "${OMARCHY_LANGUAGE_AGENT_GRACE:-0.5}"
+  done
+  return 1
+}
+
+# Make the system default match, asking once through polkit. A declined
+# dialog is an answer, not a transient, and is not asked again.
+set_system_locale() {
+  local lang_value="$1" chain="$2" since="${3:-}" existing merged
+  existing="$(cat "$SYSTEM_LOCALE_CONF" 2>/dev/null)"
+  merged="$(merge_locale_conf "$existing" "$lang_value" "$chain")"
+  [[ $merged == "$existing" ]] && return 0
+  [[ -n $since ]] && wait_for_polkit_agent "$since"
+  if printf '%s\n' "$merged" | pkexec sh -c "cat > '$SYSTEM_LOCALE_CONF'" 2>/dev/null; then
+    return 0
+  fi
+  echo "omarchy-language: system default left as it was" >&2
+  toast -g 󰗊 "$(omarchy_t "System default not updated")" "$(omarchy_t "The session uses %1; /etc/locale.conf still says otherwise. Pick the language again to retry." "$(language_name "$(language_of "${chain%%:*}")")")"
+  return 1
+}
+
+entry_label() {
+  echo "$(language_name "$(language_of "$1")") ($1)"
+}
+
+# The priority list, edited from the menu: pick an entry, then what to do
+# with it, until Apply. Returns the resulting chain, or fails on Escape.
+order_chain() {
+  local chain="$1" glyph=$'\U000F05CA' choice key entry action rows
+  while :; do
+    rows="$(
+      local i=1 e
+      local IFS=':'
+      # shellcheck disable=SC2206
+      local -a entries=($chain)
+      unset IFS
+      for e in "${entries[@]}"; do printf '%s\t%d. %s\t%s\n' "$glyph" "$i" "$(language_name "$(language_of "$e")")" "$e"; i=$((i + 1)); done
+      printf '\t%s\tadd\n' "$(omarchy_t "Add a language…")"
+      printf '\t%s\tapply\n' "$(omarchy_t "Apply")"
+    )"
+    choice="$(omarchy-menu-select "$(omarchy_t "Language order")" -- --width 520 <<<"$rows")" || return 1
+    key="${choice##*$'\t'}"
+    case "$key" in
+      apply) break ;;
+      add) entry="$(pick_language)" && chain="$(chain_add "$chain" "$entry")" ;;
+      *)
+        entry="$key"
+        action="$(printf '\t%s\ttop\n\t%s\tup\n\t%s\tdown\n\t%s\tremove\n\t%s\tback\n' \
+          "$(omarchy_t "Move to top")" "$(omarchy_t "Move up")" "$(omarchy_t "Move down")" "$(omarchy_t "Remove")" "$(omarchy_t "Back")" |
+          omarchy-menu-select "$(entry_label "$entry")" -- --width 520)" || continue
+        case "${action##*$'\t'}" in
+          top|up|down) chain="$(chain_move "$chain" "$entry" "${action##*$'\t'}")" ;;
+          remove) chain="$(chain_remove "$chain" "$entry")" ;;
+        esac
+        ;;
+    esac
+  done
+  echo "$chain"
+}
+
+# The language the interface will actually render in: the first language of
+# the chain that has a pack, English being its own source. $2 is the list of
+# chain languages that turned out to have no pack.
+effective_language() {
+  local chain="$1" missing="$2" entry lang
+  local IFS=':'
+  # shellcheck disable=SC2206
+  local -a entries=($chain)
+  unset IFS
+  for entry in "${entries[@]}"; do
+    lang="$(language_of "$entry")"
+    [[ $lang == en ]] && { echo en; return 0; }
+    [[ " $missing " == *" $lang "* ]] || { echo "$lang"; return 0; }
+  done
+  echo en
+}
+
+# The notification server is the shell, which is just back up — give it a
+# moment to start answering.
+toast() {
+  local attempt
+  for attempt in 1 2 3 4 5 6; do
+    omarchy-notification-send "$@" 2>/dev/null && return 0
+    sleep 0.5
+  done
+  return 0
+}
+
+installed_pack_dir() {
+  local id="lang.$1" manifest
+  for manifest in "$PLUGINS_DIR"/*/manifest.json; do
+    [[ -f $manifest ]] || continue
+    [[ "$(jq -r '.id // empty' "$manifest" 2>/dev/null)" == "$id" ]] && { dirname "$manifest"; return 0; }
+  done
+  return 1
+}
+
+ensure_pack() {
+  local lang="$1" dir
+  [[ $lang == en ]] && return 0
+  if dir="$(installed_pack_dir "$lang")"; then
+    if [[ -d $dir/.git ]]; then
+      omarchy-plugin-update "lang.$lang" --yes >/dev/null 2>&1 || echo "omarchy-language: could not update lang.$lang" >&2
+    fi
+    omarchy-plugin-enable "lang.$lang" >/dev/null 2>&1 || true
+  else
+    omarchy-plugin-add "$(pack_url "$lang")" --enable --yes >/dev/null 2>&1 || {
+      echo "omarchy-language: no language pack found for $lang" >&2
+      MISSING_PACKS+=("$lang")
+    }
+  fi
+}
+
+write_conf() {
+  local lang_value="$1" chain="$2" touch_env=1
+  [[ ${3:-} == --no-env ]] && touch_env=0
+  mkdir -p "$(dirname "$LANGUAGE_CONF")"
+  cat >"$LANGUAGE_CONF" <<EOF
+# Written by omarchy-language. LANGUAGE is the interface language and its
+# fallback chain, highest priority first; LANG is the locale for formats.
+# Edit LANGUAGE by hand if you like, then run: omarchy language --edit
+LANG=$lang_value
+LANGUAGE=$chain
+EOF
+  (( touch_env )) && systemctl --user set-environment "LANG=$lang_value" "LANGUAGE=$chain" 2>/dev/null || true
+}
+
+generate_locale() {
+  local locale_name="$1"
+  echo "Generating locale $locale_name"
+  sudo sed -i "s/^#\s*\($locale_name UTF-8\)/\1/" /etc/locale.gen
+  grep -q "^$locale_name UTF-8" /etc/locale.gen || echo "$locale_name UTF-8" | sudo tee -a /etc/locale.gen >/dev/null
+  sudo locale-gen
+}
+
+apply() {
+  local spec="$1" restart="$2" verbatim="${3:-}" chain lang_value entry lang
+  local -a langs=()
+  MISSING_PACKS=()
+  if [[ $verbatim == verbatim ]]; then
+    chain="$(normalize_chain "$spec")"
+  elif [[ $spec != *[:_@.]* ]]; then
+    chain="$(preferred_chain "$spec" || expand_chain "$spec")"
+  else
+    chain="$(expand_chain "$spec")"
+  fi
+  [[ -n $chain ]] || { echo "omarchy-language: nothing to set from '$spec'" >&2; return 1; }
+  remember_chain "$chain"
+
+  if ! lang_value="$(first_supported "$chain")"; then
+    local wanted
+    wanted="$(suggest_locale "$chain")" || { echo "omarchy-language: no locale known for '$spec'" >&2; return 1; }
+    if [[ -t 0 && -t 1 ]]; then
+      generate_locale "$wanted"
+      lang_value="$(first_supported "$chain")" || { echo "omarchy-language: $wanted still not generated" >&2; return 1; }
+    else
+      exec omarchy-launch-floating-terminal-with-presentation omarchy-language --install "$wanted" "$spec"
+    fi
+  fi
+
+  write_conf "$lang_value" "$chain"
+
+  local IFS=':'
+  # shellcheck disable=SC2206
+  local -a entries=($chain)
+  unset IFS
+  for entry in "${entries[@]}"; do
+    lang="$(language_of "$entry")"
+    local seen=0 l; for l in "${langs[@]}"; do [[ $l == "$lang" ]] && seen=1; done
+    (( seen )) || { langs+=("$lang"); ensure_pack "$lang"; }
+  done
+
+  local started
+  started="$(date '+%Y-%m-%d %H:%M:%S')"
+  (( restart )) && omarchy-restart-shell
+
+  # Said after the restart, by the new shell, in the new language.
+  local name headline detail
+  name="$(language_name "$(language_of "${chain%%:*}")")"
+  headline="$(omarchy_t "Language set to %1" "$name")"
+  detail="$(omarchy_t "Apps already open keep their language until you log out and back in.")"
+  # A missing pack further down the chain changes nothing the user sees;
+  # only say something when the interface will not be in the language asked.
+  local first effective
+  first="$(language_of "${chain%%:*}")"
+  effective="$(effective_language "$chain" "${MISSING_PACKS[*]}")"
+  if [[ $effective != "$first" ]]; then
+    detail="$(omarchy_t "No translation pack found for %1, so the interface uses %2." "$name" "$(language_name "$effective")") $detail"
+  fi
+  (( restart )) && toast -g 󰗊 "$headline" "$detail"
+  [[ ${OMARCHY_LANGUAGE_USER_ONLY:-0} == 1 ]] || set_system_locale "$lang_value" "$chain" "$started"
+  return 0
+}
+
+main() {
+  set -euo pipefail
+  local restart=1 spec="" mode="set" wanted=""
+  while (( $# > 0 )); do
+    case "$1" in
+      --no-restart) restart=0 ;;
+      --chain) mode="chain" ;;
+      --edit) mode="edit" ;;
+      --pick) mode="pick" ;;
+      --order) mode="order" ;;
+      --install) mode="install"; wanted="${2:-}"; spec="${3:-}"; shift 2 || true ;;
+      -h|--help) sed -n '3,5p' "$0"; return 0 ;;
+      *) spec="$1" ;;
+    esac
+    shift
+  done
+
+  case "$mode" in
+    chain) current_chain ;;
+    pick)
+      spec="$(pick_language)" || return 0
+      apply "$spec" "$restart"
+      ;;
+    edit)
+      # Open the file, then apply whatever LANGUAGE it says when the editor
+      # closes. Meant to run in a terminal (the menu uses a floating one).
+      seed_conf
+      # EDITOR is a command line, not a command name: Omarchy sets it to
+      # "omarchy-launch-editor --inline", so it has to word-split.
+      # shellcheck disable=SC2086
+      ${EDITOR:-nvim} "$LANGUAGE_CONF"
+      spec="$(conf_value "$LANGUAGE_CONF" LANGUAGE)"
+      [[ -n $spec ]] || { echo "omarchy-language: no LANGUAGE in $LANGUAGE_CONF" >&2; return 1; }
+      apply "$spec" "$restart" verbatim
+      ;;
+    order)
+      spec="$(order_chain "$(current_chain)")" || return 0
+      [[ -n $spec ]] || { echo "omarchy-language: the list is empty" >&2; return 1; }
+      apply "$spec" "$restart" verbatim
+      ;;
+    install)
+      generate_locale "$wanted"
+      apply "$spec" "$restart"
+      ;;
+    set)
+      if [[ -z $spec ]]; then
+        local chain
+        chain="$(current_chain)"
+        language_of "${chain%%:*}"
+      else
+        apply "$spec" "$restart"
+      fi
+      ;;
+  esac
+}
+
+if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
+  main "$@"
+fi

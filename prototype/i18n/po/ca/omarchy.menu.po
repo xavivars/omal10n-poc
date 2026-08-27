@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: omarchy omarchy.menu\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-27 00:07:52+0000\n"
+"POT-Creation-Date: 2026-08-28 09:02:24+0000\n"
 "PO-Revision-Date: 2026-08-27 00:07:52+0000\n"
 "Last-Translator: Xavi Ivars <xavi.ivars@gmail.com>\n"
 "Language-Team: Catalan\n"
@@ -590,6 +590,44 @@ msgstr "Entrada"
 msgid "Setup"
 msgstr "Configura"
 
+#: default/omarchy/omarchy-menu.jsonc:setup.language.advanced.description
+msgid "Edit the language order (LANGUAGE) by hand"
+msgstr "Editeu l'ordre dels idiomes (LANGUAGE) a mà"
+
+#: default/omarchy/omarchy-menu.jsonc:setup.language.advanced.label
+msgid "Advanced"
+msgstr "Avançat"
+
+#: default/omarchy/omarchy-menu.jsonc:setup.language.ca.label
+msgid "Català"
+msgstr "Català"
+
+#: default/omarchy/omarchy-menu.jsonc:setup.language.en.label
+msgid "English"
+msgstr "English"
+
+#: default/omarchy/omarchy-menu.jsonc:setup.language.label
+msgid "Language"
+msgstr "Idioma"
+
+#: default/omarchy/omarchy-menu.jsonc:setup.language.order.description
+msgid "The fallback list, highest priority first"
+msgstr "La llista de reserva, el de més prioritat primer"
+
+#: default/omarchy/omarchy-menu.jsonc:setup.language.order.label
+msgid "Language order"
+msgstr "Ordre dels idiomes"
+
+#: default/omarchy/omarchy-menu.jsonc:setup.language.other.description
+msgid "Any language this machine can generate a locale for"
+msgstr ""
+"Qualsevol idioma per al qual aquesta màquina pugui generar una configuració "
+"regional"
+
+#: default/omarchy/omarchy-menu.jsonc:setup.language.other.label
+msgid "Other…"
+msgstr "Un altre…"
+
 #: default/omarchy/omarchy-menu.jsonc:setup.monitors.label
 msgid "Monitors"
 msgstr "Monitors"
@@ -1072,3 +1110,6 @@ msgstr "Vés"
 #: shell/plugins/menu/Menu.qml:888
 msgid "Select"
 msgstr "Selecciona"
+
+#~ msgid "Fallback chain"
+#~ msgstr "Cadena de reserva"
