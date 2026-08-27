@@ -126,7 +126,12 @@ function scanBash(source) {
   const text = blankCommentLines(source, "#")
   const found = []
   const q = `"((?:[^"\\\\]|\\\\.)*)"|'([^']*)'`
-  const re = new RegExp(`\\bomarchy_t(n)?\\s+(?:(\\S+)\\s+)?(?:${q})(?:\\s+(?:${q}))?`, "g")
+  // The count slot exists only for omarchy_tn <n> "one" "many" — it may be
+  // quoted ("$n"), so it cannot be told from a msgid by its first character.
+  // Letting omarchy_t have one read a one-word string followed by another
+  // call on the same line — omarchy_t "Remove")" "$(omarchy_t "Back")" — as
+  // count="Remove")" and msgid="$(omarchy_t ", and "Remove" was never seen.
+  const re = new RegExp(`\\bomarchy_t(?:(n)\\s+(\\S+))?\\s+(?:${q})(?:\\s+(?:${q}))?`, "g")
   let m
   while ((m = re.exec(text))) {
     const plural = m[1] === "n"

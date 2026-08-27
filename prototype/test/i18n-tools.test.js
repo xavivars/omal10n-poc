@@ -102,6 +102,16 @@ test("extract: QML/JS scanner finds tr, trc, ntr, noop on any receiver", () => {
   assert.equal(found[0].line, 2)
 })
 
+test("extract: a one-word string followed by another call on the same line", () => {
+  // The count slot is for omarchy_tn <n> "one" "many"; it must not swallow a
+  // quoted one-word msgid as the count. This exact shape lost "Remove".
+  const bash = `printf '%s' "$(omarchy_t "Move up")" "$(omarchy_t "Remove")" "$(omarchy_t "Back")"`
+  assert.deepEqual(extract.scanBash(bash).map(f => f.msgid), ["Move up", "Remove", "Back"])
+  // and omarchy_tn still takes its count
+  assert.deepEqual(extract.scanBash(`omarchy_tn "$n" "%1 file" "%1 files"`).map(f => [f.msgid, f.msgid_plural]), [["%1 file", "%1 files"]])
+  assert.deepEqual(extract.scanBash(`omarchy_tn 3 "%1 item" "%1 items"`).map(f => f.msgid), ["%1 item"])
+})
+
 test("extract: bash scanner finds omarchy_t and omarchy_tn", () => {
   const src = `
     echo "$(omarchy_t "Update now?")"

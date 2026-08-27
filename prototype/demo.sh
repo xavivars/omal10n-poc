@@ -34,7 +34,7 @@ session_omarchy_path() {
 }
 
 # Commit the current prototype/omarchy-lang-ca into the bare repo the pack is
-# installed from, so `omarchy plugin update lang.ca`
+# installed from, so `omarchy plugin update lang.ca` (and omarchy-language)
 # pull the latest catalogs the way they would from GitHub.
 publish_pack() {
   local work
@@ -87,7 +87,7 @@ cmd_setup() {
   grep -v '^ca ' "$packs_conf" 2>/dev/null > "$packs_conf.tmp" || true
   echo "ca file://$pack_repo" >> "$packs_conf.tmp" && mv "$packs_conf.tmp" "$packs_conf"
   omarchy-plugin-add "file://$pack_repo" --yes >/dev/null
-  ok "$plugin_dir (git-managed, so omarchy plugin update works on it)"
+  ok "$plugin_dir (git-managed, so omarchy-language can update it)"
 
   say "5. Dev-linking the checkout"
   omarchy dev link "$checkout" --no-reboot
@@ -119,6 +119,10 @@ cmd_status() {
   [[ $live == "$checkout" ]] && ok "OMARCHY_PATH=$live" || no "OMARCHY_PATH=${live:-unset} (expected $checkout)"
   [[ -f $live/shell/Commons/I18n.qml ]] && ok "I18n.qml present in the linked tree" || no "I18n.qml missing from $live/shell/Commons"
   echo "  LANG=${LANG:-} LANGUAGE=${LANGUAGE:-} LC_ALL=${LC_ALL:-} LC_MESSAGES=${LC_MESSAGES:-}"
+
+  say "Language"
+  echo "  omarchy-language → $("$live/bin/omarchy-language" 2>/dev/null || echo '(not on this checkout)')   chain: $("$live/bin/omarchy-language" --chain 2>/dev/null)"
+  [[ -f $HOME/.config/environment.d/omarchy-language.conf ]] && ok "environment.d/omarchy-language.conf present" || echo "  (no environment.d override — session locale from /etc/locale.conf)"
 
   say "Plugin"
   if command -v omarchy-shell >/dev/null; then
@@ -154,6 +158,7 @@ MIRRORED=(
   shell/Commons/I18nModel.js
   shell/Commons/qmldir
   default/bash/i18n
+  bin/omarchy-language
 )
 
 cmd_sync() {
@@ -200,7 +205,7 @@ cmd_teardown() {
   say "Removing the pack and its cache"
   omarchy plugin disable lang.ca >/dev/null 2>&1 || true
   rm -rf "$plugin_dir" "$cache_dir" "$HOME/.config/omarchy/plugins/omarchy-lang-ca"
-  rm -f "$packs_conf"
+  rm -f "$packs_conf" "$HOME/.config/environment.d/omarchy-language.conf"
   say "Dev-unlinking"
   omarchy dev unlink
   echo "  reboot to return to the packaged shell; the checkout at $checkout is left in place"
