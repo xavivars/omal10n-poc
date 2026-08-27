@@ -12,6 +12,9 @@ set -euo pipefail
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 checkout="${OMARCHY_L10N_CHECKOUT:-$HOME/src/omarchy}"
+# The commit the patches were cut against. quattro moves fast; setup pins to
+# this so `git am` is deterministic. Set OMARCHY_L10N_BASE=quattro to try HEAD.
+base="${OMARCHY_L10N_BASE:-0ae1694830b6bd9511042fe1b89a0062d8c083cb}"
 plugin_dir="$HOME/.config/omarchy/plugins/omarchy-lang-ca"
 cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/omarchy/i18n"
 
@@ -30,14 +33,13 @@ cmd_setup() {
   else
     git clone -q -b quattro https://github.com/basecamp/omarchy "$checkout"
   fi
-  git -C "$checkout" checkout -q quattro
   git -C "$checkout" branch -D l10n-prototype >/dev/null 2>&1 || true
-  git -C "$checkout" checkout -q -b l10n-prototype
-  ok "branch l10n-prototype from $(git -C "$checkout" rev-parse --short quattro)"
+  git -C "$checkout" checkout -q -b l10n-prototype "$base"
+  ok "branch l10n-prototype from $(git -C "$checkout" rev-parse --short HEAD) ($base)"
 
   say "2. Applying patches"
   git -C "$checkout" am -q "$here"/patches/*.patch
-  git -C "$checkout" log --oneline quattro..l10n-prototype | sed 's/^/  /'
+  git -C "$checkout" log --oneline "$base"..l10n-prototype | sed 's/^/  /'
 
   say "3. Installing the language pack (disabled until the new shell runs)"
   rm -rf "$plugin_dir"
