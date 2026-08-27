@@ -92,7 +92,7 @@ translator comments, and `msgmerge` fuzzy state — which is the only real answe
 | `prototype/i18n/` | Extracted POTs and the Catalan PO files, made with real `msginit` |
 | `prototype/omarchy-lang-ca/` | The language pack, catalogs built from those PO files |
 
-`npm test` runs 43 model tests, 10 tooling tests, and 31 Bash tests. The QML now runs on a real
+`npm test` runs 43 model tests, 10 tooling tests, 7 pack-loader tests, and 31 Bash tests. The QML now runs on a real
 session too; `prototype/README.md` carries the checklist, and records what the first run settled
 and what it broke.
 

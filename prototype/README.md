@@ -29,7 +29,7 @@ prototype/
 │   ├── manifest.json         id lang.ca, kind service
 │   ├── Service.qml           reads the registry, registers matching catalogs
 │   └── catalogs/             built from i18n/po/ca by omarchy-i18n-build
-└── test/                   npm test — model, tools, and Bash helper
+└── test/                   npm test — model, tools, pack loader, Bash helper
 ```
 
 ## The chain, as it ran here
@@ -70,6 +70,7 @@ While iterating:
 | Is the pack seen and enabled | `omarchy-shell shell listPlugins \| jq '.[] \| select(.id=="lang.ca")'` |
 | What the pack registered | `~/.cache/omarchy/i18n/ca.json` — `jq '.catalogs \| keys'` |
 | Force the pack to re-register | `omarchy plugin disable lang.ca && omarchy plugin enable lang.ca` |
+| Copy edits back out of the checkout | `prototype/demo.sh sync` |
 | Undo everything | `prototype/demo.sh teardown`, then reboot |
 
 **What to look for, in order** — ✅ = confirmed on a real session
@@ -168,9 +169,15 @@ Two things worth knowing about this fix:
   notice. It is kept separate here because the prototype's job is to record what the
   first run found.
 
-Note also that `prototype/shell/Commons/` and the dev-linked checkout had drifted —
-the tests import the former while the session runs the latter, which is how the failing
-assertion surfaced at all. Worth keeping in mind when editing one of them.
+The two copies of the primitive had also drifted: the tests import
+`prototype/shell/Commons/`, the session runs the dev-linked checkout, and the
+disagreement only showed up because a test failed. `prototype/demo.sh sync` now closes
+that loop — it copies the mirrored files one way, checkout to repo, rebuilds the patch
+series from the same commits, and runs the tests. One direction on purpose: the
+checkout is both where you edit and where the patches are cut, so a two-way sync would
+only offer a way to overwrite the wrong one. It refuses to run against a checkout with
+uncommitted changes to those files, since those would reach `prototype/` but not the
+patches — a third kind of drift.
 
 **`ConfirmDialog.confirmText` has no live call site.** Both users — `Menu.qml:1206`
 and `Clipboard.qml:407` — override it (`_.tr("Uninstall")` and a bare `"Delete"`), so
@@ -178,6 +185,12 @@ only `cancelText` falls through to the default. `I18n.tr("Confirm")` is unreacha
 and «Confirma» never renders. That leaves `omarchy.shell` a two-string domain with one
 string dead, which is thin support for the "core `shell/Ui/` needs the primitive"
 argument; patch 0002 should localize a second core component before this goes up.
+
+**The pack's catalog loader is now tested.** `loaderScript` is a Bash string embedded
+in QML, so nothing in the suite executed it — which is how the `shift` bug shipped
+silently. `test/i18n-pack.test.js` lifts the string out of `Service.qml` and runs it
+against fixture directories, rather than restating it; a copy would have stayed green
+through that bug. Reintroducing the `shift` fails three of the seven.
 
 **The clone test** — ✅ confirmed on a real session
 

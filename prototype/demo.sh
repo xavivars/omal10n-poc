@@ -4,6 +4,7 @@
 #   prototype/demo.sh setup      clone quattro, apply the patches, dev-link, install the pack
 #   prototype/demo.sh enable     after the reboot: enable the pack and restart the shell
 #   prototype/demo.sh status     what the running session actually sees
+#   prototype/demo.sh sync       copy edits back out of the checkout, rebuild the patches
 #   prototype/demo.sh teardown   undo everything (dev-unlink needs a reboot too)
 #
 # The checkout goes to $OMARCHY_L10N_CHECKOUT (default ~/src/omarchy).
@@ -100,6 +101,59 @@ cmd_status() {
   journalctl --user -t omarchy-shell -n 200 --no-pager 2>/dev/null | grep -iE "i18n|lang\.ca|service plugin|warn" | tail -n 12 | sed 's/^/  /' || true
 }
 
+# The primitive exists twice: prototype/shell/ and default/ are what the tests
+# import and what a reader browses, while the dev-linked checkout is what
+# actually runs. Editing the live one and forgetting the other is easy — it
+# already happened once, and the copies only disagreed when a test failed.
+# This copies one way, checkout -> repo, because the checkout is both where
+# you edit and where the patch series is cut from.
+MIRRORED=(
+  shell/Commons/I18n.qml
+  shell/Commons/I18nModel.js
+  shell/Commons/qmldir
+  default/bash/i18n
+)
+
+cmd_sync() {
+  [[ -d $checkout/.git ]] || { no "no checkout at $checkout — run '$0 setup' first"; exit 1; }
+
+  say "1. Copying the primitive out of $checkout"
+  local dirty
+  dirty="$(git -C "$checkout" status --porcelain -- shell/Commons default/bash)"
+  if [[ -n $dirty ]]; then
+    no "uncommitted changes in the checkout — these would reach prototype/ but not the patches:"
+    printf '%s\n' "$dirty" | sed 's/^/      /'
+    echo "      commit them in $checkout first, then re-run"
+    exit 1
+  fi
+  local changed=0
+  for f in "${MIRRORED[@]}"; do
+    if [[ ! -f $checkout/$f ]]; then
+      no "missing from the checkout: $f"
+      exit 1
+    fi
+    if cmp -s "$checkout/$f" "$here/$f"; then
+      echo "      unchanged  $f"
+    else
+      cp "$checkout/$f" "$here/$f"
+      ok "updated    $f"
+      changed=$((changed + 1))
+    fi
+  done
+  [[ $changed -eq 0 ]] && echo "      (already in sync)"
+
+  say "2. Rebuilding the patch series from $base..HEAD"
+  rm -f "$here"/patches/*.patch
+  git -C "$checkout" format-patch -q -o "$here/patches" "$base..HEAD"
+  ls "$here"/patches | sed 's/^/      /'
+
+  say "3. Tests"
+  npm --prefix "$here/.." test
+
+  say "Next"
+  echo "  review with:  git -C $(cd "$here/.." && pwd) diff"
+}
+
 cmd_teardown() {
   say "Removing the pack and its cache"
   omarchy plugin disable lang.ca >/dev/null 2>&1 || true
@@ -113,6 +167,7 @@ case "${1:-}" in
   setup) cmd_setup ;;
   enable) cmd_enable ;;
   status) cmd_status ;;
+  sync) cmd_sync ;;
   teardown) cmd_teardown ;;
-  *) sed -n '2,9p' "$0"; exit 2 ;;
+  *) sed -n '2,10p' "$0"; exit 2 ;;
 esac
