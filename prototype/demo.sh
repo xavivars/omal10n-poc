@@ -5,6 +5,7 @@
 #   prototype/demo.sh enable     after the reboot: enable the pack and restart the shell
 #   prototype/demo.sh status     what the running session actually sees
 #   prototype/demo.sh sync       copy edits back out of the checkout, rebuild the patches
+#   prototype/demo.sh pack       publish omarchy-lang-ca to its git remote and update the install
 #   prototype/demo.sh teardown   undo everything (dev-unlink needs a reboot too)
 #
 # The checkout goes to $OMARCHY_L10N_CHECKOUT (default ~/src/omarchy).
@@ -16,7 +17,12 @@ checkout="${OMARCHY_L10N_CHECKOUT:-$HOME/src/omarchy}"
 # The commit the patches were cut against. quattro moves fast; setup pins to
 # this so `git am` is deterministic. Set OMARCHY_L10N_BASE=quattro to try HEAD.
 base="${OMARCHY_L10N_BASE:-0ae1694830b6bd9511042fe1b89a0062d8c083cb}"
-plugin_dir="$HOME/.config/omarchy/plugins/omarchy-lang-ca"
+# The language pack is installed the way a real one would be: cloned by
+# `omarchy plugin add` from a git remote. Here the remote is a bare repo next
+# to the checkout, and ~/.config/omarchy/language-packs points lang.ca at it.
+pack_repo="${OMARCHY_L10N_PACK_REPO:-$HOME/src/omarchy-lang-ca.git}"
+plugin_dir="$HOME/.config/omarchy/plugins/lang.ca"
+packs_conf="$HOME/.config/omarchy/language-packs"
 cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/omarchy/i18n"
 
 say() { printf '\n\033[1m%s\033[0m\n' "$*"; }
@@ -25,6 +31,36 @@ no() { printf '  \033[31m✗\033[0m %s\n' "$*"; }
 
 session_omarchy_path() {
   systemctl --user show-environment 2>/dev/null | sed -n 's/^OMARCHY_PATH=//p' | tail -n 1
+}
+
+# Commit the current prototype/omarchy-lang-ca into the bare repo the pack is
+# installed from, so `omarchy plugin update lang.ca`
+# pull the latest catalogs the way they would from GitHub.
+publish_pack() {
+  local work
+  work="$(mktemp -d)"
+  [[ -d $pack_repo ]] || git init -q --bare "$pack_repo"
+  git clone -q "$pack_repo" "$work" 2>/dev/null || git -C "$work" init -q
+  rm -rf "${work:?}"/* && cp -r "$here/omarchy-lang-ca/." "$work/"
+  git -C "$work" add -A
+  if git -C "$work" diff --cached --quiet 2>/dev/null; then
+    echo "      (pack unchanged)"
+  else
+    git -C "$work" -c user.name=omarchy-l10n -c user.email=l10n@omarchy.invalid commit -q -m "Update catalogs from $(git -C "$here/.." rev-parse --short HEAD 2>/dev/null || echo local)"
+    git -C "$work" push -q "$pack_repo" HEAD:refs/heads/main 2>/dev/null || git -C "$work" push -q "$pack_repo" HEAD:main
+    git -C "$pack_repo" symbolic-ref HEAD refs/heads/main
+    ok "published $(git -C "$work" rev-parse --short HEAD)"
+  fi
+  rm -rf "$work"
+}
+
+cmd_pack() {
+  say "Publishing the pack"
+  publish_pack
+  if [[ -d $plugin_dir/.git ]]; then
+    say "Updating the installed copy"
+    omarchy-plugin-update lang.ca --yes | sed 's/^/      /'
+  fi
 }
 
 cmd_setup() {
@@ -42,12 +78,18 @@ cmd_setup() {
   git -C "$checkout" am -q "$here"/patches/*.patch
   git -C "$checkout" log --oneline "$base"..l10n-prototype | sed 's/^/  /'
 
-  say "3. Installing the language pack (disabled until the new shell runs)"
-  rm -rf "$plugin_dir"
-  cp -r "$here/omarchy-lang-ca" "$plugin_dir"
-  ok "$plugin_dir"
+  say "3. Publishing the language pack to $pack_repo"
+  publish_pack
 
-  say "4. Dev-linking the checkout"
+  say "4. Installing it with omarchy plugin add"
+  rm -rf "$plugin_dir" "$HOME/.config/omarchy/plugins/omarchy-lang-ca"
+  mkdir -p "$(dirname "$packs_conf")"
+  grep -v '^ca ' "$packs_conf" 2>/dev/null > "$packs_conf.tmp" || true
+  echo "ca file://$pack_repo" >> "$packs_conf.tmp" && mv "$packs_conf.tmp" "$packs_conf"
+  omarchy-plugin-add "file://$pack_repo" --yes >/dev/null
+  ok "$plugin_dir (git-managed, so omarchy plugin update works on it)"
+
+  say "5. Dev-linking the checkout"
   omarchy dev link "$checkout" --no-reboot
   ok "OMARCHY_PATH will be $checkout after reboot"
 
@@ -157,7 +199,8 @@ cmd_sync() {
 cmd_teardown() {
   say "Removing the pack and its cache"
   omarchy plugin disable lang.ca >/dev/null 2>&1 || true
-  rm -rf "$plugin_dir" "$cache_dir"
+  rm -rf "$plugin_dir" "$cache_dir" "$HOME/.config/omarchy/plugins/omarchy-lang-ca"
+  rm -f "$packs_conf"
   say "Dev-unlinking"
   omarchy dev unlink
   echo "  reboot to return to the packaged shell; the checkout at $checkout is left in place"
@@ -168,6 +211,7 @@ case "${1:-}" in
   enable) cmd_enable ;;
   status) cmd_status ;;
   sync) cmd_sync ;;
+  pack) cmd_pack ;;
   teardown) cmd_teardown ;;
-  *) sed -n '2,10p' "$0"; exit 2 ;;
+  *) sed -n '2,11p' "$0"; exit 2 ;;
 esac
