@@ -481,8 +481,8 @@
     <p class="eyebrow">Design proposal &middot; Omarchy 4 / Quickshell</p>
     <h1>Omarchy Localization Architecture</h1>
     <p class="lede">
-      A four-part system for translating the Omarchy shell. Only one part &mdash; roughly
-      <strong>750 additive lines</strong>, half of them comments &mdash; needs to live in <code>basecamp/omarchy</code>.
+      A five-part system for translating the Omarchy shell. Two parts &mdash; roughly
+      <strong>750 additive lines</strong> of mechanism, half of them comments, plus a language picker under Setup &mdash; need to live in <code>basecamp/omarchy</code>.
       Catalogs, translator tooling, and language packs all sit outside the repo and cost
       maintainers nothing to carry.
     </p>
@@ -508,6 +508,10 @@
         With no catalog present, <code>I18n.tr("Connect")</code> returns <code>"Connect"</code>.
         The change is a provable no-op on a stock install, which makes it reviewable in one
         sitting and safe to revert.
+      </p>
+      <p>
+        The one user-visible piece &mdash; a language picker under Setup &mdash; is a separate,
+        optional PR at the end of the sequence. Decline it and nothing else here changes.
       </p>
       <div class="stat-row">
         <div class="stat"><span class="n">744</span><span class="k">lines upstream &#183; &#8776;540 without comments</span></div>
@@ -629,7 +633,7 @@
 
   <section>
     <h2>Components at a glance</h2>
-    <p class="section-note">Four artifacts, two ownership boundaries.</p>
+    <p class="section-note">Five artifacts, two ownership boundaries.</p>
 
     <div class="table-scroll">
       <table>
@@ -659,6 +663,15 @@
             <td><span class="nm">default/bash/i18n</span><span class="sub">sourced by bin/ scripts</span></td>
             <td><span class="chip core"><span class="dot"></span>Upstream</span></td>
             <td>Same lookup for the ~35 interactive CLI scripts, from the cache file</td>
+          </tr>
+          <tr>
+            <td>
+              <span class="nm">omarchy-language</span>
+              <span class="sub">Setup &rsaquo; Language</span>
+            </td>
+            <td><span class="nm">bin/omarchy-language</span><span class="sub">omarchy-menu.jsonc, omarchy-launch-shell</span></td>
+            <td><span class="chip core"><span class="dot"></span>Upstream</span><span class="sub">optional</span></td>
+            <td>The user-facing switch: picks a language, region or variant, orders the fallback chain, installs the packs, restarts the shell. Separable; everything else works with <code>LANGUAGE</code> set by hand</td>
           </tr>
           <tr>
             <td>
@@ -737,6 +750,46 @@
         <dt>Plurals</dt>
         <dd>A small evaluator for the <code>plural-forms</code> header; the CLI needs a handful of plural strings</dd>
       </dl>
+    </div>
+
+    <div class="comp">
+      <div class="comp-head">
+        <span class="name">omarchy-language</span>
+        <span class="chip core"><span class="dot"></span>Upstream &middot; optional</span>
+      </div>
+      <p>
+        The primitive reads the locale; something has to write it. Setup &rsaquo; Language does,
+        through <code>bin/omarchy-language</code>, in the <code>omarchy-default-browser</code> get/set
+        shape. It is the one component that is a behaviour change rather than a mechanism, so it is
+        a separate PR that can be declined without weakening anything above it: with
+        <code>LANGUAGE</code> set by hand in <code>/etc/locale.conf</code> or <code>environment.d</code>
+        and a re-login, the primitive, the packs and the hub all work exactly the same. What it
+        decides, and the rest of the design assumes when it is there:
+      </p>
+      <dl>
+        <dt>The setting is <code>LANGUAGE</code></dt>
+        <dd>gettext&rsquo;s fallback chain, highest priority first, which is what the primitive reads.
+          Regions and variants (<code>es_AR</code>, <code>ca_ES@valencia</code>, <code>sr_RS@latin</code>)
+          are entries in it; the order is the user&rsquo;s. <strong><code>LANG</code> follows</strong> as
+          the first entry with a generated locale, because glibc ignores <code>LANGUAGE</code> under the
+          C locale: a picker that set only <code>LANGUAGE</code> would translate the shell and nothing
+          else on the machine. Formats are not a separate setting in v1</dd>
+        <dt>It lives in <code>~/.config/environment.d/</code></dt>
+        <dd>Per user, applied by the user manager at the next login. For the current session
+          <code>omarchy-launch-shell</code> sources the same file, so a shell restart is enough. The
+          compositor&rsquo;s exec environment is fixed at session start and <code>hyprctl setenv</code>
+          does not reach it, so this is the only live path; apps launched after a switch keep the old
+          language until the next login</dd>
+        <dt>The system default follows</dt>
+        <dd>The same values go to <code>/etc/locale.conf</code> through <code>pkexec</code>
+          (<code>localed</code> refuses a chain), so TTY logins and the fallback for a never-picked
+          language agree with the session. See the open question</dd>
+        <dt>Packs are fetched by convention</dt>
+        <dd><code>omarchy plugin add</code> from <code>omarchy-i18n/omarchy-lang-&lt;xx&gt;</code> for each
+          language in the chain, updated when already a checkout. A language without a pack is not an
+          error; the interface uses the first in the chain that has one</dd>
+      </dl>
+      <p style="color: var(--muted);">The rows, the region picker, the order list, and what the toasts say are in the prototype.</p>
     </div>
 
     <div class="comp">
@@ -1067,6 +1120,20 @@ unbound caller:                                                  global merge  &
         </p>
       </div>
     </div>
+
+    <div class="phase">
+      <div class="idx">05</div>
+      <div>
+        <h3>Land the language picker <span class="chip core"><span class="dot"></span>Upstream</span></h3>
+        <p>
+          Setup &rsaquo; Language, <code>bin/omarchy-language</code>, and the two lines in
+          <code>omarchy-launch-shell</code> that let a restart pick the choice up. Independent of
+          steps 3&ndash;4 in code &mdash; it works with no pack installed, switching the clock&rsquo;s
+          locale and nothing else &mdash; but only compelling once one exists, which is why it comes
+          last. This is the demo: four keypresses, and the shell is in another language.
+        </p>
+      </div>
+    </div>
   </section>
 
   <section>
@@ -1102,6 +1169,28 @@ unbound caller:                                                  global merge  &
         the hub at all. It is one more link in a mechanism that already exists &mdash; but it splits
         catalogs across two places, weakens the hub as a single source of truth, and leaves
         translators without an obvious place to contribute. Undecided.
+      </p>
+    </div>
+
+    <div class="q">
+      <h3>Should the picker write the system locale?</h3>
+      <p>
+        It does, through <code>pkexec</code>, so <code>/etc/locale.conf</code> &mdash; the fallback for
+        a language never picked, and what TTY logins see &mdash; never disagrees with the session.
+        GNOME and KDE keep the language per user and make the system-wide write an explicit action;
+        Omarchy&rsquo;s one-user shape argues the other way, and the prototype found that two sources
+        which can disagree is exactly how a hand-edited chain got resurrected. The cost is one polkit
+        dialog per change. If that grates, the GNOME shape is a row under Advanced.
+      </p>
+    </div>
+
+    <div class="q">
+      <h3>The polkit-agent readiness signal is a log line.</h3>
+      <p>
+        After a shell restart the agent &mdash; a shell plugin &mdash; registers asynchronously, and
+        until it does polkit refuses rather than asks. The only signal the prototype found is the
+        shell&rsquo;s own <em>&ldquo;polkit agent registered&rdquo;</em> journal line, which it waits
+        for. Upstream should expose that properly, or the picker should stop writing the system file.
       </p>
     </div>
 

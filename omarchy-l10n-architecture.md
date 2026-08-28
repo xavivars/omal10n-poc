@@ -1,7 +1,8 @@
 # Omarchy Localization Architecture
 
-A four-part system for translating the Omarchy shell. Only one part — roughly **750 additive
-lines**, half of them comments — needs to live in `basecamp/omarchy`. Catalogs, translator tooling, and language packs
+A five-part system for translating the Omarchy shell. Two parts — roughly **750 additive
+lines** of mechanism, half of them comments, plus a language picker under Setup — need to live
+in `basecamp/omarchy`. Catalogs, translator tooling, and language packs
 all sit outside the repo and cost maintainers nothing to carry.
 
 | | |
@@ -33,6 +34,9 @@ translation, and a stale or malformed catalog cannot break a shell that falls ba
 construction.
 
 ---
+
+The one user-visible piece — a language picker under Setup — is a separate, optional PR at the
+end of the sequence. Decline it and nothing else here changes.
 
 ## How the pieces fit
 
@@ -78,6 +82,7 @@ in repositories Omarchy maintainers do not own.
 |---|---|---|---|
 | **`qs.Commons.I18n`**<br/>the primitive — *not* a plugin | `shell/Commons/`<br/>`I18n.qml`, `I18nModel.js` | **Upstream** | Locale selection, catalog registry, plural rules, `tr()` / `ntr()`, startup cache |
 | **`omarchy_t`**<br/>Bash counterpart | `default/bash/i18n`<br/>sourced by `bin/` scripts | **Upstream** | Same lookup for the ~35 interactive CLI scripts, from the cache file |
+| **`omarchy-language`**<br/>Setup › Language | `bin/omarchy-language`<br/>`omarchy-menu.jsonc`, `omarchy-launch-shell` | **Upstream**, optional | The user-facing switch: picks a language, region or variant, orders the fallback chain, installs the packs, restarts the shell. Separable; everything else works with `LANGUAGE` set by hand |
 | **`omarchy-i18n`**<br/>localization hub | own repo<br/>Weblate attaches here | Community | POT + PO source of truth, extraction and build CI, coverage dashboard |
 | **`omarchy-lang-<xx>`**<br/>plugin id `lang.<xx>` | generated repo<br/>one per locale | Community | Ships compiled JSON catalogs as an ordinary `service` plugin |
 
@@ -109,6 +114,36 @@ knowledge of which language packs exist. `jq` is already a dependency of the plu
 - **Constraint** — must be `set -u` safe; several callers enable nounset before sourcing
 - **Never touches** — command routes, flag names, or machine-readable JSON output
 - **Plurals** — a small evaluator for the `plural-forms` header; the CLI needs a handful of plural strings
+
+### `omarchy-language` — Upstream, optional
+
+The primitive reads the locale; something has to write it. Setup › Language does, through
+`bin/omarchy-language`, in the `omarchy-default-browser` get/set shape. It is the one component
+that is a behaviour change rather than a mechanism, so it is a separate PR that can be declined
+without weakening anything above it: with `LANGUAGE` set by hand in `/etc/locale.conf` or
+`environment.d` and a re-login, the primitive, the packs and the hub all work exactly the same.
+What it decides, and the rest of the design assumes when it is there:
+
+- **The setting is `LANGUAGE`** — gettext's fallback chain, highest priority first, which is
+  what the primitive reads. Regions and variants (`es_AR`, `ca_ES@valencia`, `sr_RS@latin`) are
+  entries in it; the order is the user's. **`LANG` follows** as the first entry with a generated
+  locale, because glibc ignores `LANGUAGE` under the C locale: a picker that set only `LANGUAGE`
+  would translate the shell and nothing else on the machine. Formats are not a separate setting
+  in v1
+- **It lives in `~/.config/environment.d/`**, per user, applied by the user manager at the next
+  login. For the current session `omarchy-launch-shell` sources the same file, so a shell
+  restart is enough. The compositor's exec environment is fixed at session start and
+  `hyprctl setenv` does not reach it, so this is the only live path; apps launched after a
+  switch keep the old language until the next login
+- **The system default follows** — the same values go to `/etc/locale.conf` through `pkexec`
+  (`localed` refuses a chain), so TTY logins and the fallback for a never-picked language agree
+  with the session. See the open question
+- **Packs are fetched by convention** — `omarchy plugin add` from
+  `omarchy-i18n/omarchy-lang-<xx>` for each language in the chain, updated when already a
+  checkout. A language without a pack is not an error; the interface uses the first in the chain
+  that has one
+
+The rows, the region picker, the order list, and what the toasts say are in the prototype.
 
 ### `omarchy-i18n` — Community
 
@@ -284,6 +319,13 @@ so drift is visible rather than discovered.
 `omarchy-lang-ca` as the generated artifact of step 3, installable with `omarchy plugin add`.
 Weblate can attach at any point after this without changing the architecture.
 
+**5. Land the language picker** · *Upstream*
+Setup › Language, `bin/omarchy-language`, and the two lines in `omarchy-launch-shell` that let
+a restart pick the choice up. Independent of steps 3–4 in code — it works with no pack
+installed, switching the clock's locale and nothing else — but only compelling once one
+exists, which is why it comes last. This is the demo: four keypresses, and the shell is in
+another language.
+
 ---
 
 ## Open questions
@@ -306,6 +348,20 @@ chain, letting third-party authors localize without going through the hub at all
 link in a mechanism that already exists — but it splits catalogs across two places, weakens the hub
 as a single source of truth, and leaves translators without an obvious place to contribute.
 Undecided.
+
+**Should the picker write the system locale?**
+It does, through `pkexec`, so `/etc/locale.conf` — the fallback for a language never picked, and
+what TTY logins see — never disagrees with the session. GNOME and KDE keep the language per user
+and make the system-wide write an explicit action; Omarchy's one-user shape argues the other way,
+and the prototype found that two sources which can disagree is exactly how a hand-edited chain
+got resurrected. The cost is one polkit dialog per change. If that grates, the GNOME shape is a
+row under Advanced.
+
+**The polkit-agent readiness signal is a log line.**
+After a shell restart the agent — a shell plugin — registers asynchronously, and until it does
+polkit refuses rather than asks. The only signal the prototype found is the shell's own
+*"polkit agent registered"* journal line, which it waits for. Upstream should expose that
+properly, or the picker should stop writing the system file.
 
 **Is a gettext toolchain acceptable in CI?**
 It adds nothing to the runtime — users still get plain JSON and no new packages. But `msgmerge` and

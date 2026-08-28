@@ -7,7 +7,8 @@ notes, and (eventually) a proof-of-concept language pack.
 > prototype against `quattro`, now run on an Omarchy machine: menu, `msgctxt` separation, the
 > confirm dialog, the Bash helper, and the plugin-clone fallthrough all confirmed rendering in
 > Catalan. Along the way it fixed [#6360](https://github.com/basecamp/omarchy/issues/6360) — the
-> clock now reads `dijous 2:50 a. m.` instead of `Thursday 02:50`.
+> clock now reads `dijous 2:50 a. m.` instead of `Thursday 02:50`. And there is a picker:
+> Setup › Language switches the whole shell in a couple of keypresses.
 
 ## The problem
 
@@ -50,19 +51,22 @@ That design is what this repo is.
 
 ## The proposal
 
-Four components, two ownership boundaries. Only the primitive lands upstream.
+Five components, two ownership boundaries. Upstream gets the mechanism and the setting; the
+content lives in the community.
 
 ```mermaid
 flowchart LR
   SRC["Omarchy shell<br/>I18n.tr('Connect')"] -->|extract| HUB["omarchy-i18n<br/>PO catalogs + Weblate"]
   HUB -->|msgfmt| PACK["omarchy-lang-xx<br/>compiled JSON"]
   PACK -->|omarchy plugin add| SHELL["running shell<br/>renders 'Connecta'"]
+  PICK["Setup › Language<br/>omarchy-language"] -->|LANGUAGE, packs, restart| SHELL
 ```
 
 | Component | Owner | Role |
 |---|---|---|
 | `qs.Commons.I18n` | **Upstream** | The primitive: locale selection, catalog registry, `tr()` / `ntr()` |
 | `omarchy_t` | **Upstream** | Same lookup for the interactive `bin/` scripts |
+| `omarchy-language` | **Upstream**, optional | Setup › Language: pick a language, region or variant, order the fallback chain; installs the packs and restarts the shell. Separable — everything else works with `LANGUAGE` set by hand |
 | `omarchy-i18n` | Community | PO source of truth, extraction/build CI, Weblate target |
 | `omarchy-lang-<xx>` | Community | Compiled catalogs shipped as an ordinary `service` plugin |
 
@@ -73,6 +77,12 @@ Two decisions carry most of the design:
   registry scan, so the primitive caches merged catalogs and reloads them before the first frame.
 - **A language pack *is* a plugin.** That inherits install, update-with-diff-review,
   enable/disable, and the plugins UI from machinery Omarchy already ships.
+
+The picker turns all of that into a setting. `LANGUAGE` — gettext's fallback chain — is what
+it sets; `LANG` follows as the first entry with a generated locale, because glibc ignores
+`LANGUAGE` under the C locale; both go to `environment.d` for the next login and are sourced by
+`omarchy-launch-shell` for this one, so a shell restart is enough. Four keypresses, half a
+second, and the shell is in another language. Details in the architecture doc.
 
 Catalogs are authored as **gettext PO** and compiled to JSON at build time. JSON is forced at
 runtime (it's all QML can parse); PO is chosen for plural rules, `msgctxt` disambiguation,
@@ -85,14 +95,14 @@ translator comments, and `msgmerge` fuzzy state — which is the only real answe
 | File | |
 |---|---|
 | `omarchy-l10n-architecture.md` | The architecture proposal, for maintainers |
-| `omarchy-l10n-architecture.html` | Same document, standalone browser version |
+| `omarchy-l10n-architecture.html` | Same document as a standalone page; an export of the [published artifact](https://claude.ai/code/artifact/b2f38d10-1112-4966-88c4-f9efbcf6e6dd) |
 | `prototype/` | The whole chain, built end to end — see [`prototype/README.md`](./prototype/README.md) |
-| `prototype/patches/` | The upstream changes as a 5-patch series against `quattro`: the primitive, the menu, one CLI script, and the clock |
+| `prototype/patches/` | The upstream changes as a 6-patch series against `quattro`: the primitive, the menu, one CLI script, the clock, and a language picker |
 | `prototype/tools/` | `omarchy-i18n-extract` and `omarchy-i18n-build` — what the hub would run in CI |
 | `prototype/i18n/` | Extracted POTs and the Catalan PO files, made with real `msginit` |
 | `prototype/omarchy-lang-ca/` | The language pack, catalogs built from those PO files |
 
-`npm test` runs 43 model tests, 10 tooling tests, 7 pack-loader tests, and 31 Bash tests. The QML
+`npm test` runs 43 model tests, 10 tooling tests, 7 pack-loader tests, and 62 Bash tests. The QML
 runs on a real session too; `prototype/README.md` carries the acceptance checklist and the known
 limits.
 
